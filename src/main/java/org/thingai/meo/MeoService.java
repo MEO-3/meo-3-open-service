@@ -14,8 +14,8 @@ public class MeoService extends Service {
     private static final MeoHandlerDevice handlerDevice = new MeoHandlerDevice();
 
     @Override
-    public void onServiceInit() {
-        Dao daoSqlite = new DaoSqlite(appDir + "/êmo.db");
+    protected void onServiceInit() {
+        Dao daoSqlite = new DaoSqlite(appDir + "/meo.db");
         Dao daoFile = new DaoFile(appDir + "/data");
 
         daoSqlite.initDao(new Class[]{
@@ -29,7 +29,7 @@ public class MeoService extends Service {
     }
 
     @Override
-    public void run() {
-
+    protected void onServiceRun() {
+        System.out.println("MeoService is running...");
     }
 }
