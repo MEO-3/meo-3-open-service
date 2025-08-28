@@ -1,10 +1,15 @@
 package org.thingai.meo.entities;
 
 public class MeoDeviceInfo {
-    // Device specified attributes
+    // common attributes
     private String macAddress;
+    private String model;
+    private String manufacturer;
+    private String firmwareVersion;
+    private int typeConnect; // 0: LAN, 1: BLE
+
+    // LAN specific attributes
     private String ipAddress;
-    private String serialNumber;
 
     public String getMacAddress() {
         return macAddress;
@@ -14,19 +19,37 @@ public class MeoDeviceInfo {
         this.macAddress = macAddress;
     }
 
-    public String getIpAddress() {
-        return ipAddress;
+    public String getModel() {
+        return model;
     }
 
-    public void setIpAddress(String ipAddress) {
-        this.ipAddress = ipAddress;
+    public void setModel(String model) {
+        this.model = model;
     }
 
-    public String getSerialNumber() {
-        return serialNumber;
+    public String getManufacturer() {
+        return manufacturer;
     }
 
-    public void setSerialNumber(String serialNumber) {
-        this.serialNumber = serialNumber;
+    public void setManufacturer(String manufacturer) {
+        this.manufacturer = manufacturer;
     }
+
+    public String getFirmwareVersion() {
+        return firmwareVersion;
+    }
+
+    public void setFirmwareVersion(String firmwareVersion) {
+        this.firmwareVersion = firmwareVersion;
+    }
+
+    public int getTypeConnect() {
+        return typeConnect;
+    }
+
+    public void setTypeConnect(int typeConnect) {
+        this.typeConnect = typeConnect;
+    }
+
+    // TODO(BLE specific attributes)
 }

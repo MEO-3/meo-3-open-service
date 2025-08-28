@@ -1,10 +1,8 @@
 package org.thingai.meo.entities;
 
 public class MeoDevice {
-    // Platform specified attributes (MEO platform)
-    private String label;
-    private String uid;
     private int eid;
+    private String label;
     private String model;
     private String manufacturer;
 
@@ -14,14 +12,6 @@ public class MeoDevice {
 
     public void setLabel(String label) {
         this.label = label;
-    }
-
-    public String getUid() {
-        return uid;
-    }
-
-    public void setUid(String uid) {
-        this.uid = uid;
     }
 
     public int getEid() {
