@@ -1,6 +1,9 @@
 package org.thingai.meo.controller;
 
 import io.javalin.http.Context;
+import org.thingai.meo.MeoService;
+import org.thingai.meo.entities.MeoDeviceInfo;
+import org.thingai.meo.handlers.MeoHandlerDevice;
 
 public class ControllerMeoDevice {
     // General
@@ -24,7 +27,22 @@ public class ControllerMeoDevice {
     }
 
     // IoT Specific
-    public static void getScanDevice(Context ctx) {
-        ctx.result("Scanning for new devices");
+    public static void getScannedLanDevice(Context ctx) {
+        MeoService.deviceHandler().scanLanDevice(new MeoHandlerDevice.MeoDeviceScanCallback() {
+            @Override
+            public void onDeviceFound(MeoDeviceInfo deviceInfo, String message) {
+                System.out.println(deviceInfo.getMacAddress());
+            }
+
+            @Override
+            public void onError(String errorMessage) {
+                ctx.status(500).result("Error during scan: " + errorMessage);
+            }
+        }, 1);
+        // TODO(Fix this to return actual scanned devices, maybe use async handling)
+    }
+
+    public static void getScannedBleDevice(Context ctx) {
+        ctx.result("List of scanned BLE devices");
     }
 }
