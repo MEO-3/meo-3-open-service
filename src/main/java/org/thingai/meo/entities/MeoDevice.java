@@ -5,6 +5,18 @@ public class MeoDevice {
     private String label;
     private String model;
     private String manufacturer;
+    private int typeConnect;
+
+    public MeoDevice(int eid, String label, String model, String manufacturer) {
+        this.eid = eid;
+        this.label = label;
+        this.model = model;
+        this.manufacturer = manufacturer;
+    }
+
+    public MeoDevice() {
+
+    }
 
     public String getLabel() {
         return label;
