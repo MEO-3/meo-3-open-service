@@ -14,12 +14,12 @@ public class Route {
         app.get("/", ctx -> ctx.result("Welcome to Meo Service!"));
 
         // MeoServiceController routes
-        app.get("/service/status", MeoServiceController::getServiceStatus);
+        app.get("/service/status", ControllerMeoService::getServiceStatus);
 
         // MeoDeviceController routes
-        app.get("/devices", MeoDeviceController::getAllDevices);
+        app.get("/devices", ControllerMeoDevice::getAllDevices);
 
         // MeoFlowController routes
-        app.get("/flows", MeoFlowController::getAllFlows);
+        app.get("/flows", ControllerMeoFlow::getAllFlows);
     }
 }
