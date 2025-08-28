@@ -9,9 +9,19 @@ import org.thingai.meo.handlers.MeoHandlerFlow;
 import org.thingai.meo.handlers.MeoHandlerService;
 
 public class MeoService extends Service {
-    private static final MeoHandlerService handlerService = new MeoHandlerService();
-    private static final MeoHandlerFlow handlerFlow = new MeoHandlerFlow();
-    private static final MeoHandlerDevice handlerDevice = new MeoHandlerDevice();
+    public static final MeoHandlerService handlerService = new MeoHandlerService();
+    public static final MeoHandlerFlow handlerFlow = new MeoHandlerFlow();
+    public static final MeoHandlerDevice handlerDevice = new MeoHandlerDevice();
+
+    private static final MeoService instance = new MeoService();
+
+    private MeoService() {
+
+    }
+
+    public static MeoService getInstance() {
+        return instance;
+    }
 
     @Override
     protected void onServiceInit() {
