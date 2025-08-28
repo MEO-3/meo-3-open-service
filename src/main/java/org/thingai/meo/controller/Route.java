@@ -18,11 +18,12 @@ public class Route {
 
         // MeoDeviceController routes
         app.get("/devices", ControllerMeoDevice::getAllDevices);
-        app.get("/devices/:id", ControllerMeoDevice::getDeviceById);
-        app.delete("/devices/:id", ControllerMeoDevice::deleteDeviceById);
-        app.put("/devices/:id", ControllerMeoDevice::updateDevice);
-        app.get("/devices/scan", ControllerMeoDevice::getScanDevice);
+        app.get("/devices/<id:int>", ControllerMeoDevice::getDeviceById);
+        app.delete("/devices/<id:int>", ControllerMeoDevice::deleteDeviceById);
+        app.put("/devices/<id:int>", ControllerMeoDevice::updateDevice);
 
+        app.get("/devices/scan/lan", ControllerMeoDevice::getScannedLanDevice);
+        app.get("/devices/scan/ble", ControllerMeoDevice::getScannedBleDevice);
 
         // MeoFlowController routes
         app.get("/flows", ControllerMeoFlow::getAllFlows);
