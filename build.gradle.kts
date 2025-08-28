@@ -22,6 +22,7 @@ dependencies {
     implementation("com.fasterxml.jackson.core:jackson-annotations:2.17.2")
 
     implementation("io.javalin:javalin:6.7.0")
+    implementation("org.jmdns:jmdns:3.5.12")
 }
 
 tasks.test {
