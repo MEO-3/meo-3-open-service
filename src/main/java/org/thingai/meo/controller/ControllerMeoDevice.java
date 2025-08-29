@@ -1,9 +1,9 @@
 package org.thingai.meo.controller;
 
 import io.javalin.http.Context;
-import org.thingai.meo.MeoService;
-import org.thingai.meo.entities.MeoDeviceInfo;
-import org.thingai.meo.handlers.MeoHandlerDevice;
+import org.thingai.meo.core.MeoCore;
+import org.thingai.meo.core.entities.MeoDeviceInfo;
+import org.thingai.meo.core.handlers.MeoHandlerDevice;
 
 public class ControllerMeoDevice {
     // General
@@ -28,7 +28,7 @@ public class ControllerMeoDevice {
 
     // IoT Specific
     public static void getScannedLanDevice(Context ctx) {
-        MeoService.deviceHandler().scanLanDevice(new MeoHandlerDevice.MeoDeviceScanCallback() {
+        MeoCore.deviceHandler().scanLanDevice(new MeoHandlerDevice.MeoDeviceScanCallback() {
             @Override
             public void onDeviceFound(MeoDeviceInfo deviceInfo, String message) {
                 System.out.println(deviceInfo.getMacAddress());

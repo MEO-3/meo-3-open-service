@@ -1,4 +1,4 @@
-package org.thingai.meo.entities;
+package org.thingai.meo.core.entities;
 
 public class MeoDevice {
     private int eid;

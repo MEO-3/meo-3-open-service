@@ -4,16 +4,9 @@ import org.thingai.base.Service;
 import org.thingai.base.dao.Dao;
 import org.thingai.base.dao.DaoFile;
 import org.thingai.base.dao.DaoSqlite;
-import org.thingai.meo.handlers.MeoHandlerDevice;
-import org.thingai.meo.handlers.MeoHandlerFlow;
-import org.thingai.meo.handlers.MeoHandlerService;
 
 public class MeoService extends Service {
     private static final MeoService instance = new MeoService();
-
-    private static final MeoHandlerService handlerService = new MeoHandlerService();
-    private static final MeoHandlerFlow handlerFlow = new MeoHandlerFlow();
-    private static final MeoHandlerDevice handlerDevice = new MeoHandlerDevice();
 
     private MeoService() {
 
@@ -41,17 +34,5 @@ public class MeoService extends Service {
     @Override
     protected void onServiceRun() {
         System.out.println("MeoService is running...");
-    }
-
-    public static MeoHandlerService serviceHandler() {
-        return handlerService;
-    }
-
-    public static MeoHandlerFlow flowHandler() {
-        return handlerFlow;
-    }
-
-    public static MeoHandlerDevice deviceHandler() {
-        return handlerDevice;
     }
 }

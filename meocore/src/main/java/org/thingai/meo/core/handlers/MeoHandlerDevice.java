@@ -1,9 +1,10 @@
-package org.thingai.meo.handlers;
+package org.thingai.meo.core.handlers;
 
 import org.thingai.base.dao.Dao;
 import org.thingai.base.dao.DaoSqlite;
-import org.thingai.meo.entities.MeoDevice;
-import org.thingai.meo.entities.MeoDeviceInfo;
+import org.thingai.meo.core.entities.MeoDevice;
+import org.thingai.meo.core.entities.MeoDeviceInfo;
+import org.thingai.meo.core.defines.MeoTypeConnect;
 
 import javax.jmdns.JmDNS;
 import javax.jmdns.ServiceEvent;
@@ -50,7 +51,7 @@ public class MeoHandlerDevice {
                     public void serviceResolved(ServiceEvent event) {
                         ServiceInfo info = event.getInfo();
                         MeoDeviceInfo deviceInfo = new MeoDeviceInfo();
-                        deviceInfo.setTypeConnect(org.thingai.meo.defines.MeoTypeConnect.LAN);
+                        deviceInfo.setTypeConnect(MeoTypeConnect.LAN);
                         deviceInfo.setIpAddress(info.getHostAddresses()[0]);
                         deviceInfo.setModel(info.getPropertyString("model"));
                         deviceInfo.setManufacturer(info.getPropertyString("manufacturer"));

@@ -1,4 +1,4 @@
-package org.thingai.meo.defines;
+package org.thingai.meo.core.defines;
 
 public class MeoTypeConnect {
     public static final int LAN = 0;

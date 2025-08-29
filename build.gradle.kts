@@ -11,7 +11,7 @@ repositories {
 
 dependencies {
     implementation(files("libs/applicationbase.jar"))
-    testImplementation("org.junit.jupiter:junit-jupiter")
+    implementation(files("meocore/build/libs/meocore.jar"))
 
     implementation("org.xerial:sqlite-jdbc:3.43.2.0")
     implementation("org.slf4j:slf4j-api:2.0.9") // Logging interface of jdbc
