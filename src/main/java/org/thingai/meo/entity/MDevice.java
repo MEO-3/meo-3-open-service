@@ -3,7 +3,7 @@ package org.thingai.meo.entity;
 import org.thingai.base.dao.annotations.DaoColumn;
 import org.thingai.base.dao.annotations.DaoTable;
 
-@DaoTable(name = "m_device")
+@DaoTable(name = "device")
 public class MDevice {
     @DaoColumn(name = "id", primaryKey = true)
     private String id;

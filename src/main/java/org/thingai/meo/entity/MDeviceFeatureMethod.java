@@ -3,13 +3,13 @@ package org.thingai.meo.entity;
 import org.thingai.base.dao.annotations.DaoColumn;
 import org.thingai.base.dao.annotations.DaoTable;
 
-@DaoTable(name = "m_device_feature")
-public class MDeviceFeature {
+@DaoTable(name = "device_feature_method")
+public class MDeviceFeatureMethod {
     @DaoColumn(name = "device_id", primaryKey = true)
     private String deviceId;
 
-    @DaoColumn(name = "feature_methods")
-    private String featureMethods;
+    @DaoColumn(name = "feature_method")
+    private String featureMethod;
 
     public String getDeviceId() {
         return deviceId;
@@ -19,11 +19,11 @@ public class MDeviceFeature {
         this.deviceId = deviceId;
     }
 
-    public String getFeatureMethods() {
-        return featureMethods;
+    public String getFeatureMethod() {
+        return featureMethod;
     }
 
-    public void setFeatureMethods(String featureMethods) {
-        this.featureMethods = featureMethods;
+    public void setFeatureMethod(String featureMethod) {
+        this.featureMethod = featureMethod;
     }
 }

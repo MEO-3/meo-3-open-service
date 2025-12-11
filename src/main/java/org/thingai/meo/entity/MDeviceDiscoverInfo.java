@@ -1,12 +1,13 @@
 package org.thingai.meo.entity;
 
-// This object hold in queue when a device is discovered
+// This object hold in list when a device is discovered
 public class MDeviceDiscoverInfo {
     private String ipAddress;
     private String macAddress;
     private int deviceType;
     private int connectionType;
-    private String[] featureMethods; // Feature key is a key to call a method on device
+    private String[] featureEvents;
+    private String[] featureMethods;
 
     public String getIpAddress() {
         return ipAddress;
