@@ -6,14 +6,18 @@ import org.thingai.base.dao.DaoFile;
 import org.thingai.base.dao.DaoSqlite;
 import org.thingai.base.log.ILog;
 import org.thingai.meo.entity.MDevice;
-import org.thingai.meo.handlers.MDeviceHandler;
-import org.thingai.meo.handlers.MServiceHandler;
+import org.thingai.meo.handler.MDevDiscoverHandler;
+import org.thingai.meo.handler.MDevFeatureHandler;
+import org.thingai.meo.handler.MDevMgmtHandler;
+import org.thingai.meo.handler.MServiceHandler;
 
 public class MeoService extends Service {
     private static final MeoService instance = new MeoService();
 
-    private static final MServiceHandler flowHandler = new MServiceHandler();
-    private static final MDeviceHandler deviceHandler = new MDeviceHandler();
+    private static MServiceHandler serviceHandler;
+    private static MDevMgmtHandler deviceManager;
+    private static MDevDiscoverHandler discoverHandler;
+    private static MDevFeatureHandler featureHandler;
 
     private MeoService() {
 
@@ -34,13 +38,5 @@ public class MeoService extends Service {
         daoSqlite.initDao(new Class[]{
             MDevice.class
         });
-    }
-
-    public static MServiceHandler getFlowHandler() {
-        return flowHandler;
-    }
-
-    public static MDeviceHandler getDeviceHandler() {
-        return deviceHandler;
     }
 }

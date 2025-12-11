@@ -5,8 +5,8 @@ import org.thingai.base.dao.annotations.DaoTable;
 
 @DaoTable(name = "m_device")
 public class MDevice {
-    @DaoColumn(name = "eid", primaryKey = true)
-    private int eid;
+    @DaoColumn(name = "id", primaryKey = true)
+    private String id;
 
     @DaoColumn(name = "label")
     private String label;
@@ -17,15 +17,15 @@ public class MDevice {
     @DaoColumn(name = "manufacturer")
     private String manufacturer;
 
-    @DaoColumn(name = "type_connect")
-    private int typeConnect;
+    @DaoColumn(name = "connection_type")
+    private int connectionType;
 
-    public MDevice(int eid, String label, String model, String manufacturer, int typeConnect) {
-        this.eid = eid;
+    public MDevice(String id, String label, String model, String manufacturer, int connectionType) {
+        this.id = id;
         this.label = label;
         this.model = model;
         this.manufacturer = manufacturer;
-        this.typeConnect = typeConnect;
+        this.connectionType = connectionType;
     }
 
     public MDevice() {
@@ -38,14 +38,6 @@ public class MDevice {
 
     public void setLabel(String label) {
         this.label = label;
-    }
-
-    public int getEid() {
-        return eid;
-    }
-
-    public void setEid(int eid) {
-        this.eid = eid;
     }
 
     public String getModel() {
@@ -64,11 +56,19 @@ public class MDevice {
         this.manufacturer = manufacturer;
     }
 
-    public int getTypeConnect() {
-        return typeConnect;
+    public int getConnectionType() {
+        return connectionType;
     }
 
-    public void setTypeConnect(int typeConnect) {
-        this.typeConnect = typeConnect;
+    public void setConnectionType(int connectionType) {
+        this.connectionType = connectionType;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 }
