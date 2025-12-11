@@ -1,4 +1,4 @@
 package org.thingai.meo.handlers;
 
-public class MeoHandlerFlow {
+public class MServiceHandler {
 }

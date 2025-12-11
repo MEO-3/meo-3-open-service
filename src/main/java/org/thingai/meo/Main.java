@@ -1,6 +1,7 @@
 package org.thingai.meo;
 
 import io.javalin.Javalin;
+import org.thingai.base.log.ILog;
 import org.thingai.meo.controller.Route;
 
 public class Main {
@@ -8,9 +9,12 @@ public class Main {
     private static final Javalin webService = Javalin.create();
 
     public static void main(String[] args) {
-        MeoService.name = "MeoService";
-        MeoService.appDirName = "meo_service";
-        MeoService.version = "1.0.0";
+        meoService.name = "meoService";
+        meoService.appDirName = "meo_service";
+        meoService.version = "1.0.0";
+
+        ILog.ENABLE_LOGGING = true;
+        ILog.logLevel = ILog.DEBUG;
 
         runApp();
     }
@@ -22,7 +26,6 @@ public class Main {
 
     public static void runApp() {
         meoService.init();
-        meoService.run();
 
         addRoutes();
         webService.start(7000);

@@ -10,7 +10,6 @@ repositories {
 }
 
 dependencies {
-    implementation(files("libs/applicationbase.jar"))
     testImplementation("org.junit.jupiter:junit-jupiter")
 
     implementation("org.xerial:sqlite-jdbc:3.43.2.0")
@@ -23,6 +22,11 @@ dependencies {
 
     implementation("io.javalin:javalin:6.7.0")
     implementation("org.jmdns:jmdns:3.5.12")
+
+    implementation("com.zaxxer:HikariCP:5.1.0")
+
+    implementation(files("libs/applicationbase.jar"))
+    implementation(files("libs/aibase.jar"))
 }
 
 tasks.test {

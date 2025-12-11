@@ -14,18 +14,12 @@ public class Route {
         app.get("/", ctx -> ctx.result("Welcome to Meo Service!"));
 
         // MeoServiceController routes
-        app.get("/service/status", ControllerMeoService::getServiceStatus);
+        app.get("/service/status", MServiceController::getServiceStatus);
 
         // MeoDeviceController routes
-        app.get("/devices", ControllerMeoDevice::getAllDevices);
-        app.get("/devices/<id:int>", ControllerMeoDevice::getDeviceById);
-        app.delete("/devices/<id:int>", ControllerMeoDevice::deleteDeviceById);
-        app.put("/devices/<id:int>", ControllerMeoDevice::updateDevice);
-
-        app.get("/devices/scan/lan", ControllerMeoDevice::getScannedLanDevice);
-        app.get("/devices/scan/ble", ControllerMeoDevice::getScannedBleDevice);
-
-        // MeoFlowController routes
-        app.get("/flows", ControllerMeoFlow::getAllFlows);
+        app.get("/devices", MDeviceController::getAllDevices);
+        app.get("/devices/<id:int>", MDeviceController::getDeviceById);
+        app.delete("/devices/<id:int>", MDeviceController::deleteDeviceById);
+        app.put("/devices/<id:int>", MDeviceController::updateDevice);
     }
 }

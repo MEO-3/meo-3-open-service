@@ -1,4 +1,5 @@
 package org.thingai.meo.handlers;
 
-public class MeoHandlerService {
+public class MDeviceHandler {
+
 }

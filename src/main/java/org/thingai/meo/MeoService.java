@@ -4,16 +4,16 @@ import org.thingai.base.Service;
 import org.thingai.base.dao.Dao;
 import org.thingai.base.dao.DaoFile;
 import org.thingai.base.dao.DaoSqlite;
-import org.thingai.meo.handlers.MeoHandlerDevice;
-import org.thingai.meo.handlers.MeoHandlerFlow;
-import org.thingai.meo.handlers.MeoHandlerService;
+import org.thingai.base.log.ILog;
+import org.thingai.meo.entity.MDevice;
+import org.thingai.meo.handlers.MDeviceHandler;
+import org.thingai.meo.handlers.MServiceHandler;
 
 public class MeoService extends Service {
     private static final MeoService instance = new MeoService();
 
-    private static final MeoHandlerService handlerService = new MeoHandlerService();
-    private static final MeoHandlerFlow handlerFlow = new MeoHandlerFlow();
-    private static final MeoHandlerDevice handlerDevice = new MeoHandlerDevice();
+    private static final MServiceHandler flowHandler = new MServiceHandler();
+    private static final MDeviceHandler deviceHandler = new MDeviceHandler();
 
     private MeoService() {
 
@@ -26,32 +26,21 @@ public class MeoService extends Service {
     @Override
     protected void onServiceInit() {
         Dao daoSqlite = new DaoSqlite(appDir + "/meo.db");
-        Dao daoFile = new DaoFile(appDir + "/data");
+        DaoFile daoFile = new DaoFile(appDir + "/data");
+
+        ILog.d("MeoService", "SQLite DAO initialized at: " + appDir + "/meo.db");
+        ILog.d("MeoService", "DAO File initialized at: " + appDir + "/data");
 
         daoSqlite.initDao(new Class[]{
-            // Define your entity classes here
+            MDevice.class
         });
-
-        daoFile.initDao(new Class[]{
-            // Define your entity classes here
-        });
-
     }
 
-    @Override
-    protected void onServiceRun() {
-        System.out.println("MeoService is running...");
+    public static MServiceHandler getFlowHandler() {
+        return flowHandler;
     }
 
-    public static MeoHandlerService serviceHandler() {
-        return handlerService;
-    }
-
-    public static MeoHandlerFlow flowHandler() {
-        return handlerFlow;
-    }
-
-    public static MeoHandlerDevice deviceHandler() {
-        return handlerDevice;
+    public static MDeviceHandler getDeviceHandler() {
+        return deviceHandler;
     }
 }
