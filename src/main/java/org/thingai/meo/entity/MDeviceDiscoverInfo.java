@@ -48,4 +48,12 @@ public class MDeviceDiscoverInfo {
     public void setFeatureMethods(String[] featureMethods) {
         this.featureMethods = featureMethods;
     }
+
+    public String[] getFeatureEvents() {
+        return featureEvents;
+    }
+
+    public void setFeatureEvents(String[] featureEvents) {
+        this.featureEvents = featureEvents;
+    }
 }
