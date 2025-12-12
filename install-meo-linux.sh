@@ -59,11 +59,49 @@ fi
 #    exit 1
 #fi
 
-export INFLUXDB_TOKEN
-echo "InfluxDB token set in environment variable."
+#export INFLUXDB_TOKEN
+#echo "InfluxDB token set in environment variable."
 
 # Store InfluxDB token in a file for application in /etc/meo/open-service.conf
-echo "INFLUXDB_TOKEN=$INFLUXDB_TOKEN" | sudo tee -a /etc/meo/open-service.conf
+#echo "INFLUXDB_TOKEN=$INFLUXDB_TOKEN" | sudo tee -a /etc/meo/open-service.conf
+
+#-----------------------------
+# Install and configure Avahi (mDNS)
+#-----------------------------
+echo "Installing Avahi (mDNS) for meo-open-service.local..."
+sudo apt-get install -y avahi-daemon avahi-utils libnss-mdns
+fail_if_error $? "Failed to install Avahi (mDNS)."
+
+# Ensure Avahi is enabled
+sudo systemctl enable avahi-daemon
+sudo systemctl restart avahi-daemon
+fail_if_error $? "Failed to start Avahi daemon."
+
+# Configure Avahi to advertise an MQTT service as 'meo-open-service'
+echo "Configuring Avahi MQTT service advertisement..."
+
+# Create services directory if not present
+sudo mkdir -p /etc/avahi/services
+
+# Advertise MQTT broker on port 1883 as meo-open-service
+sudo tee /etc/avahi/services/mosquitto.service > /dev/null << 'EOF'
+<?xml version="1.0" standalone='no'?>
+<!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+<service-group>
+  <!-- The hostname will be 'meo-open-service.local' if the system hostname is set to 'meo-open-service'.
+       This <name> is the human-readable service instance name visible in service browsers. -->
+  <name replace-wildcards="yes">meo-open-service</name>
+  <service>
+    <type>_mqtt._tcp</type>
+    <port>1883</port>
+  </service>
+</service-group>
+EOF
+
+sudo systemctl restart avahi-daemon
+fail_if_error $? "Failed to reload Avahi service."
+
+echo "Avahi configured. The MQTT broker should now be discoverable as 'meo-open-service' via mDNS."
 
 # Install Node-RED
 sudo apt-get install -y build-essential git curl
@@ -90,3 +128,7 @@ fi
 echo "MEO Open Service infrastructure installation completed successfully!"
 echo "Mosquitto, InfluxDB, and Node-RED are now installed and running."
 echo "You can access Node-RED at http://localhost:1880"
+
+# Optional: Set system hostname to meo-open-service for mDNS
+#sudo hostnamectl set-hostname meo-open-service
+#sudo systemctl restart avahi-daemon
