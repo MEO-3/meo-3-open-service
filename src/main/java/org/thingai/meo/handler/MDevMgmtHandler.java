@@ -6,14 +6,26 @@ import org.thingai.meo.entity.MDevice;
 public class MDevMgmtHandler {
     private static final String TAG = "MDevMgmtHandler";
 
+    private static MDevFeatureHandler featureHandler;
+
     private final Dao dao;
 
-    public MDevMgmtHandler(Dao dao) {
+    public MDevMgmtHandler(Dao dao, MDevFeatureHandler featureHandler) {
+        MDevMgmtHandler.featureHandler = featureHandler;
         this.dao = dao;
+    }
+
+    public static MDevFeatureHandler getFeatureHandler() {
+        return featureHandler;
+    }
+
+    public static void setFeatureHandler(MDevFeatureHandler featureHandler) {
+        MDevMgmtHandler.featureHandler = featureHandler;
     }
 
     public void addDevice(MDevice device) {
         dao.insertOrUpdate(device);
+        featureHandler.updateDeviceFeature(device);
     }
 
     public MDevice getDevice(String id) {

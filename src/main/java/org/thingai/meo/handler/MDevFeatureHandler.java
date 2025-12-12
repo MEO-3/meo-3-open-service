@@ -2,6 +2,7 @@ package org.thingai.meo.handler;
 
 import org.thingai.base.dao.Dao;
 import org.thingai.meo.entity.MDevice;
+import org.thingai.meo.entity.MDeviceFeatureEvent;
 import org.thingai.meo.entity.MDeviceFeatureMethod;
 
 public class MDevFeatureHandler {
@@ -18,6 +19,15 @@ public class MDevFeatureHandler {
         for (String featureMethod : device.getFeatureMethods()) {
             dao.insertOrUpdate(new MDeviceFeatureMethod(deviceId, featureMethod));
         }
+
+        for (String featureEvent : device.getFeatureEvents()) {
+            dao.insertOrUpdate(new MDeviceFeatureEvent(deviceId, featureEvent));
+        }
+    }
+
+    public void removeDeviceFeatures(String deviceId) {
+        dao.deleteByColumn(MDeviceFeatureMethod.class, "device_id", deviceId);
+        dao.deleteByColumn(MDeviceFeatureEvent.class, "device_id", deviceId);
     }
 
     public void invokeDeviceFeature(String deviceId, String featureName) {

@@ -44,8 +44,8 @@ public class MeoService extends Service {
             MDevice.class
         });
 
-        deviceManager = new MDevMgmtHandler(dao);
         featureHandler = new MDevFeatureHandler(dao);
+        deviceManager = new MDevMgmtHandler(dao, featureHandler);
         serviceHandler = new MServiceHandler();
         discoverHandler = new MDevDiscoverHandler(10, deviceManager);
 
