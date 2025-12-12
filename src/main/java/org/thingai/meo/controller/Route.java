@@ -14,12 +14,16 @@ public class Route {
         app.get("/", ctx -> ctx.result("Welcome to Meo Service!"));
 
         // MeoServiceController routes
-        app.get("/service/status", MServiceController::getServiceStatus);
+        app.get("/api/service/status", MServiceController::getServiceStatus);
 
         // MeoDeviceController routes
-        app.get("/devices", MDeviceController::getAllDevices);
-        app.get("/devices/<id:int>", MDeviceController::getDeviceById);
-        app.delete("/devices/<id:int>", MDeviceController::deleteDeviceById);
-        app.put("/devices/<id:int>", MDeviceController::updateDevice);
+        app.get("/api/devices", MDeviceController::getAllDevices);
+        app.get("/api/devices/<id:int>", MDeviceController::getDeviceById);
+        app.delete("/api/devices/<id:int>", MDeviceController::deleteDeviceById);
+        app.put("/api/devices/<id:int>", MDeviceController::updateDevice);
+
+        // Discovery routes
+        app.get("/api/discover/list", MDeviceController::getDiscoveredDevices);
+        app.post("/api/discover/register", MDeviceController::registerDevice);
     }
 }

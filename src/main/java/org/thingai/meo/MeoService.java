@@ -65,4 +65,20 @@ public class MeoService extends Service {
         discoveryThread.setDaemon(true);
         discoveryThread.start();
     }
+
+    public static MServiceHandler serviceHandler() {
+        return serviceHandler;
+    }
+
+    public static MDevMgmtHandler deviceManager() {
+        return deviceManager;
+    }
+
+    public static MDevDiscoverHandler discoverHandler() {
+        return discoverHandler;
+    }
+
+    public static MDevFeatureHandler featureHandler() {
+        return featureHandler;
+    }
 }
