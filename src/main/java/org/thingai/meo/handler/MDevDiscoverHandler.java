@@ -43,6 +43,10 @@ public class MDevDiscoverHandler {
 
     public synchronized void registerDevice(int index, String label, MRequestCallback<MDevice> callback) {
         MDeviceDiscoverInfo deviceInfo = deviceDiscoverInfos.get(index);
+        if (deviceInfo == null) {
+            callback.onFailure(-1, "Invalid device index");
+            return;
+        }
 
         // Init MDevice object
         MDevice device = new MDevice();
