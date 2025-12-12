@@ -15,24 +15,24 @@ public class MDevDiscoverHandler {
         this.deviceDiscoverInfos = new LinkedList<>();
     }
 
-    public synchronized boolean addDevice(MDeviceDiscoverInfo deviceInfo) {
+    public synchronized boolean addDiscoveredDeviceInfo(MDeviceDiscoverInfo deviceInfo) {
         if (deviceDiscoverInfos.size() >= maxSize) {
             return false;
         }
         for (MDeviceDiscoverInfo info : deviceDiscoverInfos) {
             if (info.getMacAddress().equals(deviceInfo.getMacAddress())) {
-                return false;
+                return true; // Device already discovered
             }
         }
         deviceDiscoverInfos.add(deviceInfo);
         return true;
     }
 
-    public synchronized MDeviceDiscoverInfo[] getDevices() {
+    public synchronized MDeviceDiscoverInfo[] getDiscoveredDeviceInfo() {
         return deviceDiscoverInfos.toArray(new MDeviceDiscoverInfo[0]);
     }
 
-    public synchronized void clearDevices() {
+    public synchronized void clearDiscoverList() {
         deviceDiscoverInfos.clear();
     }
 }

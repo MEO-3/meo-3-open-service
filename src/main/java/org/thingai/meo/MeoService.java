@@ -7,6 +7,7 @@ import org.thingai.base.dao.DaoSqlite;
 import org.thingai.base.log.ILog;
 import org.thingai.meo.callback.MDeviceDiscoverCallback;
 import org.thingai.meo.entity.MDevice;
+import org.thingai.meo.entity.MDeviceDiscoverInfo;
 import org.thingai.meo.handler.MDevDiscoverHandler;
 import org.thingai.meo.handler.MDevFeatureHandler;
 import org.thingai.meo.handler.MDevMgmtHandler;
@@ -50,13 +51,18 @@ public class MeoService extends Service {
 
         MDeviceDiscoverCallback discoverCallback = new MDeviceDiscoverCallback() {
             @Override
-            public void onDeviceRegistered(MDevice device, String message) {
-                ILog.i("MeoService", "Device discovered/registered: " + message);
+            public void onDeviceDiscovered(MDeviceDiscoverInfo deviceInfo, String message) {
+                ILog.i("MeoService", "Device discovered: " + message);
             }
 
             @Override
-            public void onRegisteredFailed(int errorCode, String errorMessage) {
-                ILog.w("MeoService", "Device discovery failed (" + errorCode + "): " + errorMessage);
+            public void onDeviceRegistered(MDevice device, String message) {
+                ILog.i("MeoService", "Device registered: " + message);
+            }
+
+            @Override
+            public void onDeviceRegisteredFailed(int errorCode, String errorMessage) {
+                ILog.e("MeoService", "Device registration failed (" + errorCode + "): " + errorMessage);
             }
         };
 

@@ -27,7 +27,7 @@ public class MDeviceController {
 
     // Discovery
     public static void getDiscoveredDevices(Context ctx) {
-        MDeviceDiscoverInfo[] devices = MeoService.discoverHandler().getDevices();
+        MDeviceDiscoverInfo[] devices = MeoService.discoverHandler().getDiscoveredDeviceInfo();
         ctx.json(devices);
     }
 

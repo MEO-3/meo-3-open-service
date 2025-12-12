@@ -91,10 +91,7 @@ public class MeoDiscoveryService implements Runnable {
             }
 
             if (!EXPECTED_MAGIC.equals(dp.magic)) {
-                ILog.w(TAG, "Discovery packet missing/invalid magic, ignoring");
-                if (callback != null) {
-                    callback.onRegisteredFailed(-1, "Invalid magic in discovery packet");
-                }
+                ILog.d(TAG, "Discovery packet missing/invalid magic, ignoring");
                 return;
             }
 
@@ -106,12 +103,9 @@ public class MeoDiscoveryService implements Runnable {
             info.setFeatureEvents(dp.featureEvents);
             info.setFeatureMethods(dp.featureMethods);
 
-            boolean added = discoverHandler.addDevice(info);
+            boolean added = discoverHandler.addDiscoveredDeviceInfo(info);
             if (!added) {
-                ILog.w(TAG, "Device with MAC " + dp.mac + " already discovered or list full");
-                if (callback != null) {
-                    callback.onRegisteredFailed(-2, "Discovery list full or duplicate");
-                }
+                ILog.d(TAG, "Device with MAC " + dp.mac + " already discovered or list full");
                 return;
             }
 
@@ -127,7 +121,7 @@ public class MeoDiscoveryService implements Runnable {
         } catch (Exception e) {
             ILog.e(TAG, "Failed to handle discovery payload: " + e.getMessage());
             if (callback != null) {
-                callback.onRegisteredFailed(-3, "Exception processing discovery: " + e.getMessage());
+                callback.onDeviceRegisteredFailed(-1, "Invalid discovery payload");
             }
         }
     }
