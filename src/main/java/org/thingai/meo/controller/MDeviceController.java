@@ -1,7 +1,12 @@
 package org.thingai.meo.controller;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import io.javalin.http.Context;
+import org.thingai.base.log.ILog;
 import org.thingai.meo.MeoService;
+import org.thingai.meo.callback.MRequestCallback;
+import org.thingai.meo.entity.MDevice;
 import org.thingai.meo.entity.MDeviceDiscoverInfo;
 
 public class MDeviceController {
@@ -32,6 +37,26 @@ public class MDeviceController {
     }
 
     public static void registerDevice(Context ctx) {
-        ctx.result("Device registered");
+        String body = ctx.body();
+
+        ILog.d("MDeviceController", "Register device request body: " + body);
+
+        JsonObject bodyJson = MeoService.getGson().fromJson(body, JsonObject.class);
+        int index = bodyJson.get("index").getAsInt();
+        String label = bodyJson.get("label").getAsString();
+
+        MeoService.discoverHandler().registerDevice(index, label, new MRequestCallback<MDevice>() {
+            @Override
+            public void onSuccess(MDevice result, String message) {
+                ILog.d("MDeviceController", "Device registered: " + MeoService.getGson().toJson(result));
+                ctx.json(result);
+            }
+
+            @Override
+            public void onFailure(int errorCode, String errorMessage) {
+                ILog.e("MDeviceController", "Device registration failed: " + errorMessage);
+                ctx.status(500).result("Device registration failed: " + errorMessage);
+            }
+        });
     }
 }

@@ -3,7 +3,6 @@ package org.thingai.meo;
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
 import org.thingai.base.log.ILog;
-import org.thingai.meo.callback.MDeviceDiscoverCallback;
 import org.thingai.meo.define.MConnectionType;
 import org.thingai.meo.entity.MDeviceDiscoverInfo;
 import org.thingai.meo.handler.MDevDiscoverHandler;
@@ -35,17 +34,15 @@ public class MeoDiscoveryService implements Runnable {
     private static final String TAG = "MDiscoveryService";
     private static final String EXPECTED_MAGIC = "MEO3_DISCOVERY_V1";
 
-    private final int port;
     private final MDevDiscoverHandler discoverHandler;
-    private final MDeviceDiscoverCallback callback;
+    private final int port;
     private final Gson gson = new Gson();
 
     private volatile boolean running = true;
 
-    public MeoDiscoveryService(int port, MDevDiscoverHandler discoverHandler, MDeviceDiscoverCallback callback) {
+    public MeoDiscoveryService(int port, MDevDiscoverHandler discoverHandler) {
         this.port = port;
         this.discoverHandler = discoverHandler;
-        this.callback = callback;
     }
 
     public void stop() {
@@ -98,7 +95,8 @@ public class MeoDiscoveryService implements Runnable {
             MDeviceDiscoverInfo info = new MDeviceDiscoverInfo();
             info.setIpAddress(dp.ip);
             info.setMacAddress(dp.mac);
-            info.setDeviceType(0);
+            info.setListeningPort(dp.listenPort);
+            info.setManufacturer(dp.manufacturer);
             info.setConnectionType(dp.connectionType);
             info.setFeatureEvents(dp.featureEvents);
             info.setFeatureMethods(dp.featureMethods);
@@ -112,9 +110,6 @@ public class MeoDiscoveryService implements Runnable {
             ILog.i(TAG, "Discovered device: mac=" + dp.mac + ", ip=" + dp.ip);
         } catch (Exception e) {
             ILog.e(TAG, "Failed to handle discovery payload: " + e.getMessage());
-            if (callback != null) {
-                callback.onDeviceRegisteredFailed(-1, "Invalid discovery payload");
-            }
         }
     }
 

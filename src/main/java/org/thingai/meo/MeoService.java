@@ -1,13 +1,12 @@
 package org.thingai.meo;
 
+import com.google.gson.Gson;
 import org.thingai.base.Service;
 import org.thingai.base.dao.Dao;
 import org.thingai.base.dao.DaoFile;
 import org.thingai.base.dao.DaoSqlite;
 import org.thingai.base.log.ILog;
-import org.thingai.meo.callback.MDeviceDiscoverCallback;
 import org.thingai.meo.entity.MDevice;
-import org.thingai.meo.entity.MDeviceDiscoverInfo;
 import org.thingai.meo.handler.MDevDiscoverHandler;
 import org.thingai.meo.handler.MDevFeatureHandler;
 import org.thingai.meo.handler.MDevMgmtHandler;
@@ -20,6 +19,7 @@ public class MeoService extends Service {
     private static MDevMgmtHandler deviceManager;
     private static MDevDiscoverHandler discoverHandler;
     private static MDevFeatureHandler featureHandler;
+    private static Gson gson = new Gson();
 
     // Discovery service thread
     private Thread discoveryThread;
@@ -34,39 +34,23 @@ public class MeoService extends Service {
 
     @Override
     protected void onServiceInit() {
-        Dao daoSqlite = new DaoSqlite(appDir + "/meo.db");
+        Dao dao = new DaoSqlite(appDir + "/meo.db");
         DaoFile daoFile = new DaoFile(appDir + "/data");
 
         ILog.d("MeoService", "SQLite DAO initialized at: " + appDir + "/meo.db");
         ILog.d("MeoService", "DAO File initialized at: " + appDir + "/data");
 
-        daoSqlite.initDao(new Class[]{
+        dao.initDao(new Class[]{
             MDevice.class
         });
 
-        deviceManager = new MDevMgmtHandler(daoSqlite);
+        deviceManager = new MDevMgmtHandler(dao);
         serviceHandler = new MServiceHandler();
-        discoverHandler = new MDevDiscoverHandler(10);
+        discoverHandler = new MDevDiscoverHandler(10, deviceManager);
         featureHandler = new MDevFeatureHandler();
 
-        MDeviceDiscoverCallback discoverCallback = new MDeviceDiscoverCallback() {
-            @Override
-            public void onDeviceDiscovered(MDeviceDiscoverInfo deviceInfo, String message) {
-                ILog.i("MeoService", "Device discovered: " + message);
-            }
-
-            @Override
-            public void onDeviceRegistered(MDevice device, String message) {
-                ILog.i("MeoService", "Device registered: " + message);
-            }
-
-            @Override
-            public void onDeviceRegisteredFailed(int errorCode, String errorMessage) {
-                ILog.e("MeoService", "Device registration failed (" + errorCode + "): " + errorMessage);
-            }
-        };
-
-        MeoDiscoveryService discoveryService = new MeoDiscoveryService(8901, discoverHandler, discoverCallback);
+        // Start device discovery service
+        MeoDiscoveryService discoveryService = new MeoDiscoveryService(8901, discoverHandler);
         discoveryThread = new Thread(discoveryService);
         discoveryThread.setDaemon(true);
         discoveryThread.start();
@@ -86,5 +70,9 @@ public class MeoService extends Service {
 
     public static MDevFeatureHandler featureHandler() {
         return featureHandler;
+    }
+
+    public static Gson getGson() {
+        return gson;
     }
 }
