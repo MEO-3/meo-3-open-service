@@ -8,7 +8,7 @@ import org.thingai.meo.entity.MDeviceFeatureMethod;
 public class MDevFeatureHandler {
     private static final String TAG = "MDevFeatureHandler";
 
-    private Dao dao;
+    private final Dao dao;
 
     public MDevFeatureHandler(Dao dao) {
         this.dao = dao;
