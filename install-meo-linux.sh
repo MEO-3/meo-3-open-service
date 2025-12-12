@@ -27,9 +27,9 @@ fi
 
 # Install InfluxDB
 wget -q https://repos.influxdata.com/influxdata-archive_compat.key
-echo '393e8779c89ac8d958f81f942f9ad7fb82a25e133faddaf92e15b16e6ac9ce4c influxdata-archive_compat.key' | sha256sum -c && cat influxdata-archive_compat.key | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/influxdata-archive_compat.gpg > /dev/null
+echo "393e8779c89ac8d958f81f942f9ad7fb82a25e133faddaf92e15b16e6ac9ce4c influxdata-archive_compat.key" | sha256sum -c && cat influxdata-archive_compat.key | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/influxdata-archive_compat.gpg > /dev/null
 echo 'deb [signed-by=/etc/apt/trusted.gpg.d/influxdata-archive_compat.gpg] https://repos.influxdata.com/debian stable main' | sudo tee /etc/apt/sources.list.d/influxdata.list
-
+sudo apt update
 sudo apt-get update && sudo apt-get install influxdb2
 
 if [ $? -ne 0 ]; then
@@ -45,19 +45,19 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-# Configure InfluxDB (example configuration, adjust as needed)
-influx setup --username meo --password meo123456 --org meo_org --bucket meo_bucket --retention 30d --force
-if [ $? -ne 0 ]; then
-    echo "Failed to configure InfluxDB."
-    exit 1
-fi
-
-# Get InfluxDB token for later use
-INFLUXDB_TOKEN=$(influx auth list -o meo_org -t $(influx config get -o) | grep meo | awk '{print $1}')
-if [ -z "$INFLUXDB_TOKEN" ]; then
-    echo "Failed to retrieve InfluxDB token."
-    exit 1
-fi
+## Configure InfluxDB (example configuration, adjust as needed)
+#influxd setup --username meo --password meo123456 --org meo_org --bucket meo_bucket --retention 30d --force
+#if [ $? -ne 0 ]; then
+#    echo "Failed to configure InfluxDB."
+#    exit 1
+#fi
+#
+## Get InfluxDB token for later use
+#INFLUXDB_TOKEN=$(influxd auth list -o meo_org -t $(influxd config get -o) | grep meo | awk '{print $1}')
+#if [ -z "$INFLUXDB_TOKEN" ]; then
+#    echo "Failed to retrieve InfluxDB token."
+#    exit 1
+#fi
 
 export INFLUXDB_TOKEN
 echo "InfluxDB token set in environment variable."

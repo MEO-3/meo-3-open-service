@@ -110,14 +110,6 @@ public class MeoDiscoveryService implements Runnable {
             }
 
             ILog.i(TAG, "Discovered device: mac=" + dp.mac + ", ip=" + dp.ip);
-            // At this stage, "registered" from the device's POV means "discovered by gateway".
-            // Full registration (device_id/transmit_key) can be a second phase.
-            if (callback != null) {
-                // For now we pass null device because no MDevice exists yet.
-                callback.onDeviceRegistered(null, "Device discovered: " + dp.mac);
-            }
-
-            // TODO: trigger registration back to device (TCP connect to dp.ip:dp.listenPort)
         } catch (Exception e) {
             ILog.e(TAG, "Failed to handle discovery payload: " + e.getMessage());
             if (callback != null) {
