@@ -11,6 +11,15 @@ public class MDeviceFeatureMethod {
     @DaoColumn(name = "feature_method")
     private String featureMethod;
 
+    public MDeviceFeatureMethod(String deviceId, String featureMethod) {
+        this.deviceId = deviceId;
+        this.featureMethod = featureMethod;
+    }
+
+    public MDeviceFeatureMethod() {
+
+    }
+
     public String getDeviceId() {
         return deviceId;
     }

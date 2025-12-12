@@ -45,9 +45,9 @@ public class MeoService extends Service {
         });
 
         deviceManager = new MDevMgmtHandler(dao);
+        featureHandler = new MDevFeatureHandler(dao);
         serviceHandler = new MServiceHandler();
         discoverHandler = new MDevDiscoverHandler(10, deviceManager);
-        featureHandler = new MDevFeatureHandler();
 
         // Start device discovery service
         MeoDiscoveryService discoveryService = new MeoDiscoveryService(8901, discoverHandler);

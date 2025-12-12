@@ -12,22 +12,29 @@ import org.thingai.meo.entity.MDeviceDiscoverInfo;
 public class MDeviceController {
     // General
     public static void getAllDevices(Context ctx) {
-        ctx.result("List of all devices");
+        MDevice[] devices = MeoService.deviceManager().getAllDevices();
+        ctx.json(devices);
     }
 
     public static void getDeviceById(Context ctx) {
         String deviceId = ctx.pathParam("id");
-        ctx.result("Details of device with ID: " + deviceId);
+        MDevice device = MeoService.deviceManager().getDevice(deviceId);
+        ctx.json(device);
     }
 
     public static void deleteDeviceById(Context ctx) {
         String deviceId = ctx.pathParam("id");
+        MeoService.deviceManager().deleteDevice(deviceId);
         ctx.result("Deleted device with ID: " + deviceId);
     }
 
     public static void updateDevice(Context ctx) {
         String deviceId = ctx.pathParam("id");
-        ctx.result("Updated device with ID: " + deviceId);
+        String body = ctx.body();
+        JsonObject bodyJson = MeoService.getGson().fromJson(body, JsonObject.class);
+        String newLabel = bodyJson.get("label").getAsString();
+        MeoService.deviceManager().updateDeviceLabel(deviceId, newLabel);
+        ctx.result("Updated device label for ID: " + deviceId);
     }
 
     // Discovery

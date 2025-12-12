@@ -20,6 +20,10 @@ public class MDevMgmtHandler {
         return dao.query(MDevice.class, "id", id)[0];
     }
 
+    public MDevice[] getAllDevices() {
+        return dao.readAll(MDevice.class);
+    }
+
     public void deleteDevice(String id) {
         dao.delete(MDevice.class, id);
     }

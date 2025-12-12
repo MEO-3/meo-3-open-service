@@ -20,6 +20,9 @@ public class MDevice {
     @DaoColumn(name = "connection_type")
     private int connectionType;
 
+    private String[] featureMethods;
+    private String[] featureEvents;
+
     public MDevice(String id, String label, String model, String manufacturer, int connectionType) {
         this.id = id;
         this.label = label;
@@ -70,5 +73,21 @@ public class MDevice {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public String[] getFeatureMethods() {
+        return featureMethods;
+    }
+
+    public void setFeatureMethods(String[] featureMethods) {
+        this.featureMethods = featureMethods;
+    }
+
+    public String[] getFeatureEvents() {
+        return featureEvents;
+    }
+
+    public void setFeatureEvents(String[] featureEvents) {
+        this.featureEvents = featureEvents;
     }
 }

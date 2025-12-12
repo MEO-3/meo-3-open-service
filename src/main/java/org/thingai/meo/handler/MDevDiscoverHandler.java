@@ -55,6 +55,8 @@ public class MDevDiscoverHandler {
         device.setConnectionType(deviceInfo.getConnectionType());
         device.setManufacturer(deviceInfo.getManufacturer());
         device.setModel(deviceInfo.getModel());
+        device.setFeatureEvents(deviceInfo.getFeatureEvents());
+        device.setFeatureMethods(deviceInfo.getFeatureMethods());
 
         String transmitKey = generateTransmitKey(device);
 
@@ -63,6 +65,8 @@ public class MDevDiscoverHandler {
             sendResponseToDevice(deviceInfo, device.getId(), transmitKey);
             deviceManager.addDevice(device);
             callback.onSuccess(device, "Device registered successfully");
+            // Remove from discover list
+            deviceDiscoverInfos.remove(index);
         } catch (Exception e) {
             callback.onFailure(-1, "Failed to send response to device: " + e.getMessage());
         }
