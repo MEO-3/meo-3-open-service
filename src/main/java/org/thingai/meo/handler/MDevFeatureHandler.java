@@ -1,6 +1,7 @@
 package org.thingai.meo.handler;
 
 import org.thingai.base.dao.Dao;
+import org.thingai.base.log.ILog;
 import org.thingai.meo.entity.MDevice;
 import org.thingai.meo.entity.MDeviceFeatureEvent;
 import org.thingai.meo.entity.MDeviceFeatureMethod;
@@ -15,7 +16,9 @@ public class MDevFeatureHandler {
     }
 
     public void updateDeviceFeature(MDevice device) {
+        ILog.d(TAG,"updateDeviceFeature", device.getFeatureMethods().length + " methods, " + device.getFeatureEvents().length + " events");
         String deviceId = device.getId();
+
         for (String featureMethod : device.getFeatureMethods()) {
             dao.insertOrUpdate(new MDeviceFeatureMethod(deviceId, featureMethod));
         }
@@ -23,6 +26,14 @@ public class MDevFeatureHandler {
         for (String featureEvent : device.getFeatureEvents()) {
             dao.insertOrUpdate(new MDeviceFeatureEvent(deviceId, featureEvent));
         }
+    }
+
+    public MDeviceFeatureMethod[] getDeviceFeatureMethods(String deviceId) {
+        return dao.query(MDeviceFeatureMethod.class, "device_id", deviceId);
+    }
+
+    public MDeviceFeatureEvent[] getDeviceFeatureEvents(String deviceId) {
+        return dao.query(MDeviceFeatureEvent.class, "device_id", deviceId);
     }
 
     public void removeDeviceFeatures(String deviceId) {

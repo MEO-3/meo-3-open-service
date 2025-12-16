@@ -48,6 +48,11 @@ public class MDevDiscoverHandler {
             return;
         }
 
+        ILog.d(TAG, "registerDevice", label, deviceInfo.getMacAddress());
+        if (label == null || label.isEmpty()) {
+            label = deviceInfo.getModel();
+        }
+
         // Init MDevice object
         MDevice device = new MDevice();
         device.setId(generateDeviceId(deviceInfo));
@@ -57,6 +62,10 @@ public class MDevDiscoverHandler {
         device.setModel(deviceInfo.getModel());
         device.setFeatureEvents(deviceInfo.getFeatureEvents());
         device.setFeatureMethods(deviceInfo.getFeatureMethods());
+
+        ILog.d(TAG, "Device label: " + device.getLabel());
+        ILog.d(TAG, "Device feature events: " + String.join(", ", device.getFeatureEvents()));
+        ILog.d(TAG, "Device feature methods: " + String.join(", ", device.getFeatureMethods()));
 
         String transmitKey = generateTransmitKey(device);
 
@@ -77,14 +86,10 @@ public class MDevDiscoverHandler {
     }
 
     private String generateDeviceId(MDeviceDiscoverInfo deviceInfo) {
-        // 4 bytes unix timestamp + 6 bytes MAC address
-        long timestamp = System.currentTimeMillis() / 1000L;
-        byte[] macBytes = ByteUtil.stringToBytes(deviceInfo.getMacAddress());
-        byte[] timestampBytes = ByteUtil.longToBytes(timestamp);
-
-        byte[] deviceIdBytes = new byte[10];
-        System.arraycopy(timestampBytes, 0, deviceIdBytes, 0, 4);
-        System.arraycopy(macBytes, 0, deviceIdBytes, 4, 6);
+        // Device ID is generated from current timestamp and MAC address (12 bytes, 6 bytes from MAC, 6 bytes from timestamp)
+        byte[] macBytes = ByteUtil.hexStringToBytes(deviceInfo.getMacAddress().replace(":", ""));
+        byte[] timestampBytes = ByteUtil.getCurrentTimestampBytes(6);
+        byte[] deviceIdBytes = ByteUtil.concatBytes(macBytes, timestampBytes);
         return ByteUtil.bytesToHexString(deviceIdBytes);
     }
 
