@@ -2,7 +2,7 @@ package org.thingai.meo;
 
 import io.javalin.Javalin;
 import org.thingai.base.log.ILog;
-import org.thingai.meo.controller.Route;
+import org.thingai.meo.api.Route;
 
 public class Main {
     private static final MeoService meoService = MeoService.getInstance();
