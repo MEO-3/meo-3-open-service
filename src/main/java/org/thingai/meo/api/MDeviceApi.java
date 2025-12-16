@@ -1,6 +1,5 @@
-package org.thingai.meo.controller;
+package org.thingai.meo.api;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import io.javalin.http.Context;
 import org.thingai.base.log.ILog;
@@ -9,7 +8,7 @@ import org.thingai.meo.callback.MRequestCallback;
 import org.thingai.meo.entity.MDevice;
 import org.thingai.meo.entity.MDeviceDiscoverInfo;
 
-public class MDeviceController {
+public class MDeviceApi {
     // General
     public static void getAllDevices(Context ctx) {
         MDevice[] devices = MeoService.deviceManager().getAllDevices();
@@ -25,7 +24,10 @@ public class MDeviceController {
     public static void deleteDeviceById(Context ctx) {
         String deviceId = ctx.pathParam("id");
         MeoService.deviceManager().deleteDevice(deviceId);
-        ctx.result("Deleted device with ID: " + deviceId);
+
+        String jsonResponse = "{\"message\": \"Deleted device with ID: " + deviceId + "\"}";
+
+        ctx.json(jsonResponse);
     }
 
     public static void updateDevice(Context ctx) {
