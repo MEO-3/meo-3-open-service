@@ -4,22 +4,23 @@ import org.thingai.base.dao.annotations.DaoColumn;
 import org.thingai.base.dao.annotations.DaoTable;
 
 @DaoTable(name = "device_feature_method")
-public class MDeviceFeatureMethod {
+public class MDeviceFeatureMethod extends MDeviceFeature {
     @DaoColumn(name = "device_id", primaryKey = true)
     private String deviceId;
 
     @DaoColumn(name = "feature_method")
-    private String featureMethod;
+    private String featureName;
 
-    public MDeviceFeatureMethod(String deviceId, String featureMethod) {
+    public MDeviceFeatureMethod(String deviceId, String featureName) {
         this.deviceId = deviceId;
-        this.featureMethod = featureMethod;
+        this.featureName = featureName;
     }
 
     public MDeviceFeatureMethod() {
 
     }
 
+    @Override
     public String getDeviceId() {
         return deviceId;
     }
@@ -28,11 +29,12 @@ public class MDeviceFeatureMethod {
         this.deviceId = deviceId;
     }
 
-    public String getFeatureMethod() {
-        return featureMethod;
+    @Override
+    public String getFeatureName() {
+        return featureName;
     }
 
-    public void setFeatureMethod(String featureMethod) {
-        this.featureMethod = featureMethod;
+    public void setFeatureName(String featureName) {
+        this.featureName = featureName;
     }
 }
