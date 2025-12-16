@@ -27,4 +27,38 @@ public class ByteUtil {
         return sb.toString();
     }
 
+    public static byte[] hexStringToBytes(String hex) {
+        int len = hex.length();
+        byte[] data = new byte[len / 2];
+
+        // convert uppercase to lowercase
+        hex = hex.toLowerCase();
+        for (int i = 0; i < len; i += 2) {
+            data[i / 2] = (byte) ((Character.digit(hex.charAt(i), 16) << 4)
+                                 + Character.digit(hex.charAt(i+1), 16));
+        }
+        return data;
+    }
+
+    public static byte[] getCurrentTimestampBytes(int byteLength) {
+        long currentTime = System.currentTimeMillis();
+
+        byte[] fullBytes = longToBytes(currentTime);
+        if (byteLength >= 8) {
+            return fullBytes;
+        }
+        byte[] result = new byte[byteLength];
+
+        // get bytes from the end
+        System.arraycopy(fullBytes, 8 - byteLength, result, 0, byteLength);
+        return result;
+    }
+
+    public static byte[] concatBytes(byte[] first, byte[] second) {
+        byte[] result = new byte[first.length + second.length];
+        System.arraycopy(first, 0, result, 0, first.length);
+        System.arraycopy(second, 0, result, first.length, second.length);
+        return result;
+    }
+
 }
