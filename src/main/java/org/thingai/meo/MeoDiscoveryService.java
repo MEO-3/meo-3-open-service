@@ -95,6 +95,7 @@ public class MeoDiscoveryService implements Runnable {
             MDeviceDiscoverInfo info = new MDeviceDiscoverInfo();
             info.setIpAddress(dp.ip);
             info.setMacAddress(dp.mac);
+            info.setModel(dp.model);
             info.setListeningPort(dp.listenPort);
             info.setManufacturer(dp.manufacturer);
             info.setConnectionType(dp.connectionType);

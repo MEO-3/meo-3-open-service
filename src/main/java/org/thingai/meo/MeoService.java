@@ -7,6 +7,8 @@ import org.thingai.base.dao.DaoFile;
 import org.thingai.base.dao.DaoSqlite;
 import org.thingai.base.log.ILog;
 import org.thingai.meo.entity.MDevice;
+import org.thingai.meo.entity.MDeviceFeatureEvent;
+import org.thingai.meo.entity.MDeviceFeatureMethod;
 import org.thingai.meo.handler.MDevDiscoverHandler;
 import org.thingai.meo.handler.MDevFeatureHandler;
 import org.thingai.meo.handler.MDevMgmtHandler;
@@ -41,7 +43,9 @@ public class MeoService extends Service {
         ILog.d("MeoService", "DAO File initialized at: " + appDir + "/data");
 
         dao.initDao(new Class[]{
-            MDevice.class
+            MDevice.class,
+            MDeviceFeatureEvent.class,
+            MDeviceFeatureMethod.class
         });
 
         featureHandler = new MDevFeatureHandler(dao);
