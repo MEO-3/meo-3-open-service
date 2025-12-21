@@ -1,12 +1,17 @@
 package org.thingai.meo;
 
 import io.javalin.Javalin;
+import io.javalin.plugin.bundled.CorsPluginConfig;
 import org.thingai.base.log.ILog;
 import org.thingai.meo.api.Route;
 
 public class Main {
     private static final MeoService meoService = MeoService.getInstance();
-    private static final Javalin webService = Javalin.create();
+    private static final Javalin webService = Javalin.create(config -> {
+        config.bundledPlugins.enableCors(cors -> {
+            cors.addRule(CorsPluginConfig.CorsRule::anyHost);
+        });
+    });
 
     public static void main(String[] args) {
         meoService.name = "meoService";
