@@ -13,12 +13,14 @@ public class MDeviceApi {
     public static void getAllDevices(Context ctx) {
         MDevice[] devices = MeoService.deviceManager().getAllDevices();
         ctx.json(devices);
+        ctx.status(200);
     }
 
     public static void getDeviceById(Context ctx) {
         String deviceId = ctx.pathParam("id");
         MDevice device = MeoService.deviceManager().getDevice(deviceId);
         ctx.json(device);
+        ctx.status(200);
     }
 
     public static void deleteDeviceById(Context ctx) {
@@ -28,6 +30,7 @@ public class MDeviceApi {
         String jsonResponse = "{\"message\": \"Deleted device with ID: " + deviceId + "\"}";
 
         ctx.json(jsonResponse);
+        ctx.status(200);
     }
 
     public static void updateDevice(Context ctx) {
@@ -37,12 +40,14 @@ public class MDeviceApi {
         String newLabel = bodyJson.get("label").getAsString();
         MeoService.deviceManager().updateDeviceLabel(deviceId, newLabel);
         ctx.result("Updated device label for ID: " + deviceId);
+        ctx.status(200);
     }
 
     // Discovery
     public static void getDiscoveredDevices(Context ctx) {
         MDeviceDiscoverInfo[] devices = MeoService.discoverHandler().getDiscoveredDeviceInfo();
         ctx.json(devices);
+        ctx.status(200);
     }
 
     public static void registerDevice(Context ctx) {
@@ -59,6 +64,7 @@ public class MDeviceApi {
             public void onSuccess(MDevice result, String message) {
                 ILog.d("MDeviceController", "Device registered: " + MeoService.getGson().toJson(result));
                 ctx.json(result);
+                ctx.status(201);
             }
 
             @Override
