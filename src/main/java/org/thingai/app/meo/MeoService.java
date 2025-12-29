@@ -1,6 +1,8 @@
 package org.thingai.app.meo;
 
 import com.google.gson.Gson;
+import org.thingai.app.meo.handler.mqtt.MMqttHandler;
+import org.thingai.app.meo.handler.telemetry.MTelemetryHandler;
 import org.thingai.base.Service;
 import org.thingai.base.dao.Dao;
 import org.thingai.platform.dao.DaoFile;
@@ -21,7 +23,8 @@ public class MeoService extends Service {
     private static MDevMgmtHandler deviceManager;
     private static MDevDiscoverHandler discoverHandler;
     private static MDevFeatureHandler featureHandler;
-    private static Gson gson = new Gson();
+    private static MMqttHandler mqttHandler;
+    private static MTelemetryHandler telemetryHandler;
 
     // Discovery service thread
     private Thread discoveryThread;
@@ -58,6 +61,10 @@ public class MeoService extends Service {
         discoveryThread = new Thread(discoveryService);
         discoveryThread.setDaemon(true);
         discoveryThread.start();
+
+        mqttHandler = new MMqttHandler("tcp://localhost:1883", "meo-open-service", null, null);
+        mqttHandler.setTelemetryHandler(telemetryHandler);
+        mqttHandler.connectAndSubscribe();
     }
 
     public static MServiceHandler serviceHandler() {
@@ -74,9 +81,5 @@ public class MeoService extends Service {
 
     public static MDevFeatureHandler featureHandler() {
         return featureHandler;
-    }
-
-    public static Gson getGson() {
-        return gson;
     }
 }

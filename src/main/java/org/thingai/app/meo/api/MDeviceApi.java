@@ -2,6 +2,7 @@ package org.thingai.app.meo.api;
 
 import com.google.gson.JsonObject;
 import io.javalin.http.Context;
+import org.thingai.app.meo.util.JsonUtil;
 import org.thingai.base.log.ILog;
 import org.thingai.app.meo.MeoService;
 import org.thingai.meo.common.callback.MRequestCallback;
@@ -36,7 +37,7 @@ public class MDeviceApi {
     public static void updateDevice(Context ctx) {
         String deviceId = ctx.pathParam("id");
         String body = ctx.body();
-        JsonObject bodyJson = MeoService.getGson().fromJson(body, JsonObject.class);
+        JsonObject bodyJson = JsonUtil.fromJson(body, JsonObject.class);
         String newLabel = bodyJson.get("label").getAsString();
         MeoService.deviceManager().updateDeviceLabel(deviceId, newLabel);
         ctx.result("Updated device label for ID: " + deviceId);
@@ -55,14 +56,14 @@ public class MDeviceApi {
 
         ILog.d("MDeviceController", "Register device request body: " + body);
 
-        JsonObject bodyJson = MeoService.getGson().fromJson(body, JsonObject.class);
+        JsonObject bodyJson = JsonUtil.fromJson(body, JsonObject.class);
         int index = bodyJson.get("index").getAsInt();
         String label = bodyJson.get("label").getAsString();
 
         MeoService.discoverHandler().registerDevice(index, label, new MRequestCallback<MDevice>() {
             @Override
             public void onSuccess(MDevice result, String message) {
-                ILog.d("MDeviceController", "Device registered: " + MeoService.getGson().toJson(result));
+                ILog.d("MDeviceController", "Device registered: " + JsonUtil.toJson(result));
                 ctx.json(result);
                 ctx.status(201);
             }

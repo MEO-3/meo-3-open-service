@@ -33,6 +33,6 @@ public class Main {
         meoService.init();
 
         addRoutes();
-        webService.start(7001);
+        webService.start(7000);
     }
 }
