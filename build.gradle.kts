@@ -2,7 +2,7 @@ plugins {
     id("java")
 }
 
-group = "org.thingai"
+group = "org.thingai.app"
 version = "1.0-SNAPSHOT"
 
 repositories {
@@ -26,7 +26,9 @@ dependencies {
 
     implementation("com.zaxxer:HikariCP:5.1.0")
 
+    implementation(files("meo-common/build/libs/meo-common.jar"))
     implementation(files("libs/applicationbase.jar"))
+    implementation(files("libs/desktopplatform.jar"))
     implementation(files("libs/aibase.jar"))
 }
 
