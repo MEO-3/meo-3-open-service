@@ -9,9 +9,9 @@ import org.thingai.base.log.ILog;
 import org.thingai.meo.common.entity.MDevice;
 import org.thingai.meo.common.entity.MDeviceFeatureEvent;
 import org.thingai.meo.common.entity.MDeviceFeatureMethod;
-import org.thingai.app.meo.handler.MDevDiscoverHandler;
-import org.thingai.app.meo.handler.MDevFeatureHandler;
-import org.thingai.app.meo.handler.MDevMgmtHandler;
+import org.thingai.app.meo.handler.device.MDevDiscoverHandler;
+import org.thingai.app.meo.handler.device.MDevFeatureHandler;
+import org.thingai.app.meo.handler.device.MDevMgmtHandler;
 import org.thingai.app.meo.handler.MServiceHandler;
 
 public class MeoService extends Service {

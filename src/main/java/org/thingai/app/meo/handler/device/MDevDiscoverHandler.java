@@ -1,4 +1,4 @@
-package org.thingai.app.meo.handler;
+package org.thingai.app.meo.handler.device;
 
 import org.thingai.base.log.ILog;
 import org.thingai.meo.common.callback.MRequestCallback;

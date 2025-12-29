@@ -1,4 +1,4 @@
-package org.thingai.app.meo.handler;
+package org.thingai.app.meo.handler.device;
 
 import org.thingai.base.dao.Dao;
 import org.thingai.base.log.ILog;
