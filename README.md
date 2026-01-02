@@ -1,6 +1,6 @@
 # MEO 3 Open Service Project
 
-This repository contains the code and resources for the MEO 3 Open Service Project. The project aims to provide an open-source solution for managing and deploying services on custom hardware.
+This repository contains the code and resources for the MEO 3 Open Service Project. The project aims to provide an open-source solution for managing and deploying services on custom hardware, especially on edge devices.
 
 ## Overview
 The MEO 3 Open Service project is designed to run on gateway or other similar devices (Raspberry Pi, Nano Pi, etc.). It provides on-the-edge platform and services for various applications. 
