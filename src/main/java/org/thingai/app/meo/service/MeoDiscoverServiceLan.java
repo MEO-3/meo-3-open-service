@@ -5,7 +5,7 @@ import com.google.gson.annotations.SerializedName;
 import org.thingai.base.log.ILog;
 import org.thingai.meo.common.define.MConnectionType;
 import org.thingai.meo.common.entity.MDeviceConfigLan;
-import org.thingai.app.meo.handler.device.MDevDiscoverHandler;
+import org.thingai.app.meo.handler.device.MDeviceConfigHandler;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -30,17 +30,17 @@ import java.net.SocketException;
  *   "featureMethods": ["turn_on", "turn_off"]
  * }
  */
-public class MeoDiscoveryServiceLan implements Runnable {
+public class MeoDiscoverServiceLan implements Runnable {
     private static final String TAG = "MDiscoveryServiceLan";
     private static final String EXPECTED_MAGIC = "MEO3_DISCOVERY_V1";
 
-    private final MDevDiscoverHandler discoverHandler;
+    private final MDeviceConfigHandler discoverHandler;
     private final int port;
     private final Gson gson = new Gson();
 
     private volatile boolean running = true;
 
-    public MeoDiscoveryServiceLan(int port, MDevDiscoverHandler discoverHandler) {
+    public MeoDiscoverServiceLan(int port, MDeviceConfigHandler discoverHandler) {
         this.port = port;
         this.discoverHandler = discoverHandler;
     }

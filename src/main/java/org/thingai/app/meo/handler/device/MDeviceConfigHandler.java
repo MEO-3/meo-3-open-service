@@ -10,15 +10,15 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.LinkedList;
 
-public class MDevDiscoverHandler {
-    private static final String TAG = "MDevDiscoverHandler";
+public class MDeviceConfigHandler {
+    private static final String TAG = "MDeviceConfigHandler";
 
     private final LinkedList<MDeviceConfigLan> bufferDeviceConfig;
     private final int maxSize;
 
-    private MDevMgmtHandler deviceManager;
+    private MDeviceHandler deviceManager;
 
-    public MDevDiscoverHandler(int maxSize, MDevMgmtHandler deviceManager) {
+    public MDeviceConfigHandler(int maxSize, MDeviceHandler deviceManager) {
         this.deviceManager = deviceManager;
         this.maxSize = maxSize;
         this.bufferDeviceConfig = new LinkedList<>();

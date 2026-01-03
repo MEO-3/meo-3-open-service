@@ -6,12 +6,12 @@ import org.thingai.meo.common.entity.MDevice;
 import org.thingai.meo.common.entity.MDeviceFeatureEvent;
 import org.thingai.meo.common.entity.MDeviceFeatureMethod;
 
-public class MDevFeatureHandler {
-    private static final String TAG = "MDevFeatureHandler";
+public class MDeviceFeatureHandler {
+    private static final String TAG = "MDeviceFeatureHandler";
 
     private final Dao dao;
 
-    public MDevFeatureHandler(Dao dao) {
+    public MDeviceFeatureHandler(Dao dao) {
         this.dao = dao;
     }
 

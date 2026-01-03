@@ -11,24 +11,24 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class MDevMgmtHandler {
-    private static final String TAG = "MDevMgmtHandler";
+public class MDeviceHandler {
+    private static final String TAG = "MDeviceHandler";
 
-    private static MDevFeatureHandler featureHandler;
+    private static MDeviceFeatureHandler featureHandler;
 
     private final Dao dao;
 
-    public MDevMgmtHandler(Dao dao, MDevFeatureHandler featureHandler) {
-        MDevMgmtHandler.featureHandler = featureHandler;
+    public MDeviceHandler(Dao dao, MDeviceFeatureHandler featureHandler) {
+        MDeviceHandler.featureHandler = featureHandler;
         this.dao = dao;
     }
 
-    public static MDevFeatureHandler getFeatureHandler() {
+    public static MDeviceFeatureHandler getFeatureHandler() {
         return featureHandler;
     }
 
-    public static void setFeatureHandler(MDevFeatureHandler featureHandler) {
-        MDevMgmtHandler.featureHandler = featureHandler;
+    public static void setFeatureHandler(MDeviceFeatureHandler featureHandler) {
+        MDeviceHandler.featureHandler = featureHandler;
     }
 
     public void addDevice(MDevice device) {
