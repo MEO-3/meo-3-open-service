@@ -1,8 +1,8 @@
 package org.thingai.app.meo;
 
-import com.google.gson.Gson;
 import org.thingai.app.meo.handler.mqtt.MMqttHandler;
 import org.thingai.app.meo.handler.telemetry.MTelemetryHandler;
+import org.thingai.app.meo.service.MeoDiscoveryServiceLan;
 import org.thingai.base.Service;
 import org.thingai.base.dao.Dao;
 import org.thingai.platform.dao.DaoFile;
@@ -57,7 +57,7 @@ public class MeoService extends Service {
         discoverHandler = new MDevDiscoverHandler(10, deviceManager);
 
         // Start device discovery service
-        MeoDiscoveryService discoveryService = new MeoDiscoveryService(8901, discoverHandler);
+        MeoDiscoveryServiceLan discoveryService = new MeoDiscoveryServiceLan(8901, discoverHandler);
         discoveryThread = new Thread(discoveryService);
         discoveryThread.setDaemon(true);
         discoveryThread.start();

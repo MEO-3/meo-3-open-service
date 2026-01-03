@@ -7,6 +7,7 @@ import org.thingai.base.log.ILog;
 import org.thingai.app.meo.MeoService;
 import org.thingai.meo.common.callback.MRequestCallback;
 import org.thingai.meo.common.entity.MDevice;
+import org.thingai.meo.common.entity.MDeviceConfigLan;
 import org.thingai.meo.common.entity.MDeviceDiscoverInfo;
 
 public class MDeviceApi {
@@ -46,7 +47,7 @@ public class MDeviceApi {
 
     // Discovery
     public static void getDiscoveredDevices(Context ctx) {
-        MDeviceDiscoverInfo[] devices = MeoService.discoverHandler().getDiscoveredDeviceInfo();
+        MDeviceConfigLan[] devices = MeoService.discoverHandler().getDeviceConfig();
         ctx.json(devices);
         ctx.status(200);
     }

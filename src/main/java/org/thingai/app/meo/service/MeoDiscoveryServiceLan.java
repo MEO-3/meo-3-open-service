@@ -1,10 +1,10 @@
-package org.thingai.app.meo;
+package org.thingai.app.meo.service;
 
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
 import org.thingai.base.log.ILog;
 import org.thingai.meo.common.define.MConnectionType;
-import org.thingai.meo.common.entity.MDeviceDiscoverInfo;
+import org.thingai.meo.common.entity.MDeviceConfigLan;
 import org.thingai.app.meo.handler.device.MDevDiscoverHandler;
 
 import java.io.IOException;
@@ -30,8 +30,8 @@ import java.net.SocketException;
  *   "featureMethods": ["turn_on", "turn_off"]
  * }
  */
-public class MeoDiscoveryService implements Runnable {
-    private static final String TAG = "MDiscoveryService";
+public class MeoDiscoveryServiceLan implements Runnable {
+    private static final String TAG = "MDiscoveryServiceLan";
     private static final String EXPECTED_MAGIC = "MEO3_DISCOVERY_V1";
 
     private final MDevDiscoverHandler discoverHandler;
@@ -40,7 +40,7 @@ public class MeoDiscoveryService implements Runnable {
 
     private volatile boolean running = true;
 
-    public MeoDiscoveryService(int port, MDevDiscoverHandler discoverHandler) {
+    public MeoDiscoveryServiceLan(int port, MDevDiscoverHandler discoverHandler) {
         this.port = port;
         this.discoverHandler = discoverHandler;
     }
@@ -92,17 +92,17 @@ public class MeoDiscoveryService implements Runnable {
                 return;
             }
 
-            MDeviceDiscoverInfo info = new MDeviceDiscoverInfo();
+            MDeviceConfigLan info = new MDeviceConfigLan();
             info.setIpAddress(dp.ip);
             info.setMacAddress(dp.mac);
             info.setModel(dp.model);
-            info.setListeningPort(dp.listenPort);
+            info.setPort(dp.listenPort);
             info.setManufacturer(dp.manufacturer);
             info.setConnectionType(dp.connectionType);
             info.setFeatureEvents(dp.featureEvents);
             info.setFeatureMethods(dp.featureMethods);
 
-            boolean added = discoverHandler.addDiscoveredDeviceInfo(info);
+            boolean added = discoverHandler.addDeviceConfigLan(info);
             if (!added) {
                 ILog.d(TAG, "Device with MAC " + dp.mac + " already discovered or list full");
                 return;
