@@ -1,25 +1,13 @@
 package org.thingai.meo.common.entity;
 
 // This object hold in list when a device is discovered
-public class MDeviceDiscoverInfo {
-    private String ipAddress;
-    private String macAddress;
-    private String manufacturer;
-    private String model;
-    private int connectionType;
-    private String[] featureEvents;
-    private String[] featureMethods;
-
-    // LAN device
-    private int listeningPort;
-
-    public String getIpAddress() {
-        return ipAddress;
-    }
-
-    public void setIpAddress(String ipAddress) {
-        this.ipAddress = ipAddress;
-    }
+public abstract class MDeviceConfig {
+    protected String macAddress;
+    protected String manufacturer;
+    protected String model;
+    protected int connectionType;
+    protected String[] featureEvents;
+    protected String[] featureMethods;
 
     public String getMacAddress() {
         return macAddress;
@@ -67,13 +55,5 @@ public class MDeviceDiscoverInfo {
 
     public void setModel(String model) {
         this.model = model;
-    }
-
-    public int getListeningPort() {
-        return listeningPort;
-    }
-
-    public void setListeningPort(int listeningPort) {
-        this.listeningPort = listeningPort;
     }
 }
