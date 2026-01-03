@@ -6,7 +6,6 @@ public class MDeviceDiscoverInfo {
     private String macAddress;
     private String manufacturer;
     private String model;
-    private int deviceType;
     private int connectionType;
     private String[] featureEvents;
     private String[] featureMethods;
@@ -28,14 +27,6 @@ public class MDeviceDiscoverInfo {
 
     public void setMacAddress(String macAddress) {
         this.macAddress = macAddress;
-    }
-
-    public int getDeviceType() {
-        return deviceType;
-    }
-
-    public void setDeviceType(int deviceType) {
-        this.deviceType = deviceType;
     }
 
     public int getConnectionType() {
