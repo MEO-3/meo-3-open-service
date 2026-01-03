@@ -3,20 +3,22 @@ package org.thingai.app.meo.handler.device;
 import org.thingai.base.log.ILog;
 import org.thingai.meo.common.callback.MRequestCallback;
 import org.thingai.meo.common.entity.MDevice;
-import org.thingai.meo.common.entity.MDeviceConfigLan;
+
 import org.thingai.app.meo.util.ByteUtil;
+import org.thingai.meo.common.entity.config.MDeviceConfigLan;
+import org.thingai.meo.common.handler.MDeviceConfigHandler;
 
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.LinkedList;
 
-public class MDeviceConfigLanHandler {
+public class MDeviceConfigLanHandler implements MDeviceConfigHandler<MDeviceConfigLan> {
     private static final String TAG = "MDeviceConfigLanHandler";
 
     private final LinkedList<MDeviceConfigLan> bufferDeviceConfig;
     private final int maxSize;
 
-    private MDeviceHandler deviceManager;
+    private final MDeviceHandler deviceManager;
 
     public MDeviceConfigLanHandler(int maxSize, MDeviceHandler deviceManager) {
         this.deviceManager = deviceManager;
@@ -124,6 +126,11 @@ public class MDeviceConfigLanHandler {
             ILog.e(TAG, "Failed to send response to device: " + e.getMessage());
             throw new RuntimeException("Failed to send response to device", e);
         }
+
+    }
+
+    @Override
+    public void configAndSyncDevice(MDeviceConfigLan mDeviceConfigLan) {
 
     }
 }
