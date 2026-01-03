@@ -1,4 +1,4 @@
-package org.thingai.meo.common.entity;
+package org.thingai.meo.common.entity.config;
 
 import java.util.HashMap;
 

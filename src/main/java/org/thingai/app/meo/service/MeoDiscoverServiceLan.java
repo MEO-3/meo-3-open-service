@@ -2,10 +2,10 @@ package org.thingai.app.meo.service;
 
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
+import org.thingai.app.meo.handler.device.MDeviceConfigLanHandler;
 import org.thingai.base.log.ILog;
 import org.thingai.meo.common.define.MConnectionType;
 import org.thingai.meo.common.entity.MDeviceConfigLan;
-import org.thingai.app.meo.handler.device.MDeviceConfigHandler;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -34,13 +34,13 @@ public class MeoDiscoverServiceLan implements Runnable {
     private static final String TAG = "MDiscoveryServiceLan";
     private static final String EXPECTED_MAGIC = "MEO3_DISCOVERY_V1";
 
-    private final MDeviceConfigHandler discoverHandler;
+    private final MDeviceConfigLanHandler discoverHandler;
     private final int port;
     private final Gson gson = new Gson();
 
     private volatile boolean running = true;
 
-    public MeoDiscoverServiceLan(int port, MDeviceConfigHandler discoverHandler) {
+    public MeoDiscoverServiceLan(int port, MDeviceConfigLanHandler discoverHandler) {
         this.port = port;
         this.discoverHandler = discoverHandler;
     }

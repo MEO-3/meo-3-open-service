@@ -1,4 +1,4 @@
-package org.thingai.meo.common.entity;
+package org.thingai.meo.common.entity.config;
 
 // This object hold in list when a device is discovered
 public abstract class MDeviceConfig {

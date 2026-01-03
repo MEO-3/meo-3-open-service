@@ -1,22 +1,22 @@
-package org.thingai.meo.common.entity;
+package org.thingai.meo.common.entity.feature;
 
 import org.thingai.base.dao.annotations.DaoColumn;
 import org.thingai.base.dao.annotations.DaoTable;
 
-@DaoTable(name = "device_feature_method")
-public class MDeviceFeatureMethod extends MDeviceFeature {
+@DaoTable(name = "device_feature_event")
+public class MDeviceFeatureEvent extends MDeviceFeature {
     @DaoColumn(name = "device_id", primaryKey = true)
     private String deviceId;
 
-    @DaoColumn(name = "feature_method")
+    @DaoColumn(name = "feature_event")
     private String featureName;
 
-    public MDeviceFeatureMethod(String deviceId, String featureName) {
+    public MDeviceFeatureEvent(String deviceId, String featureName) {
         this.deviceId = deviceId;
         this.featureName = featureName;
     }
 
-    public MDeviceFeatureMethod() {
+    public MDeviceFeatureEvent() {
 
     }
 

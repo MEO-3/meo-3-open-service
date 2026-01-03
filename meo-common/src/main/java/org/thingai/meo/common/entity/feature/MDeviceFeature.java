@@ -1,4 +1,4 @@
-package org.thingai.meo.common.entity;
+package org.thingai.meo.common.entity.feature;
 
 public abstract class MDeviceFeature {
     protected String deviceId;
