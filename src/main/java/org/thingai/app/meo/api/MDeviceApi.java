@@ -8,7 +8,6 @@ import org.thingai.app.meo.MeoService;
 import org.thingai.meo.common.callback.MRequestCallback;
 import org.thingai.meo.common.entity.MDevice;
 import org.thingai.meo.common.entity.MDeviceConfigLan;
-import org.thingai.meo.common.entity.MDeviceDiscoverInfo;
 
 public class MDeviceApi {
     // General
