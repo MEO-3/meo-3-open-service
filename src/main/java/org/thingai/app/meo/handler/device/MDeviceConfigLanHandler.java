@@ -1,6 +1,7 @@
 package org.thingai.app.meo.handler.device;
 
 import org.thingai.base.log.ILog;
+import org.thingai.meo.common.callback.MDeviceConfigCallback;
 import org.thingai.meo.common.callback.MRequestCallback;
 import org.thingai.meo.common.entity.MDevice;
 
@@ -130,7 +131,7 @@ public class MDeviceConfigLanHandler implements MDeviceConfigHandler<MDeviceConf
     }
 
     @Override
-    public void configAndSyncDevice(MDeviceConfigLan mDeviceConfigLan) {
+    public void configAndSyncDevice(MDeviceConfigLan mDeviceConfigLan, MDeviceConfigCallback mDeviceConfigCallback) {
 
     }
 }

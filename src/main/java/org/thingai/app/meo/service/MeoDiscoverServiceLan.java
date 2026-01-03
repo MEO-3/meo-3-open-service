@@ -5,7 +5,7 @@ import com.google.gson.annotations.SerializedName;
 import org.thingai.app.meo.handler.device.MDeviceConfigLanHandler;
 import org.thingai.base.log.ILog;
 import org.thingai.meo.common.define.MConnectionType;
-import org.thingai.meo.common.entity.MDeviceConfigLan;
+import org.thingai.meo.common.entity.config.MDeviceConfigLan;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -119,7 +119,6 @@ public class MeoDiscoverServiceLan implements Runnable {
      */
     private static class DiscoveryPacket {
         String magic;
-        String label;
         String model;
         String manufacturer;
         int connectionType = MConnectionType.LAN;

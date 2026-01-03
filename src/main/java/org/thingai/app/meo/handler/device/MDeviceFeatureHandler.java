@@ -3,8 +3,8 @@ package org.thingai.app.meo.handler.device;
 import org.thingai.base.dao.Dao;
 import org.thingai.base.log.ILog;
 import org.thingai.meo.common.entity.MDevice;
-import org.thingai.meo.common.entity.MDeviceFeatureEvent;
-import org.thingai.meo.common.entity.MDeviceFeatureMethod;
+import org.thingai.meo.common.entity.feature.MDeviceFeatureEvent;
+import org.thingai.meo.common.entity.feature.MDeviceFeatureMethod;
 
 public class MDeviceFeatureHandler {
     private static final String TAG = "MDeviceFeatureHandler";
