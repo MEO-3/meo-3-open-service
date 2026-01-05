@@ -91,7 +91,7 @@ public class MeoService extends Service {
                         // Optional logging
                     }
                 }));
-        mqttClient.connectAndSubscribe();
+        mqttClient.connect();
     }
 
     public static MServiceHandler serviceHandler() {

@@ -14,9 +14,9 @@ public class MMqttClient {
         this.mqttConfig = config;
     }
 
-    public void connectAndSubscribe() {
+    public void connect() {
         try {
-            ILog.d(TAG, "connectAndSubscribe", mqttConfig.getBrokerUrl());
+            ILog.d(TAG, "connect", mqttConfig.getBrokerUrl());
             client = new MqttClient(mqttConfig.getBrokerUrl(), mqttConfig.getClientId(), null);
 
             MqttConnectOptions options = getMqttConnectOptions();
@@ -32,6 +32,17 @@ public class MMqttClient {
 
     public MMqttConfig getMqttConfig() {
         return mqttConfig;
+    }
+
+    public void disconnect() {
+        try {
+            if (client != null && client.isConnected()) {
+                client.disconnect();
+                ILog.i(TAG, "Disconnected from MQTT broker");
+            }
+        } catch (MqttException e) {
+            ILog.e(TAG, "Failed to disconnect MQTT: " + e.getMessage());
+        }
     }
 
     @NotNull
