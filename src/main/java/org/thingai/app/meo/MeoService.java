@@ -1,6 +1,6 @@
 package org.thingai.app.meo;
 
-import com.google.gson.JsonObject;
+
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
@@ -9,7 +9,6 @@ import org.thingai.app.meo.handler.device.MDeviceConfigLanHandler;
 import org.thingai.app.meo.core.mqtt.MMqttClient;
 import org.thingai.app.meo.handler.telemetry.MTelemetryHandler;
 import org.thingai.app.meo.service.MeoDiscoverServiceLan;
-import org.thingai.app.meo.util.JsonUtil;
 import org.thingai.base.Service;
 import org.thingai.base.dao.Dao;
 import org.thingai.meo.common.entity.feature.MDeviceFeatureEvent;
