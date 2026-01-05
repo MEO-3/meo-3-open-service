@@ -29,11 +29,7 @@ public class MMqttClient {
             ILog.e(TAG, "Failed to connect MQTT: " + e.getMessage());
         }
     }
-
-    public MMqttConfig getMqttConfig() {
-        return mqttConfig;
-    }
-
+    
     public void disconnect() {
         try {
             if (client != null && client.isConnected()) {
@@ -43,6 +39,45 @@ public class MMqttClient {
         } catch (MqttException e) {
             ILog.e(TAG, "Failed to disconnect MQTT: " + e.getMessage());
         }
+    }
+
+    public boolean isConnected() {
+        return client != null && client.isConnected();
+    }
+
+
+    // synchronized methods for thread safety
+    public synchronized void subscribe(String topic, int qos) {
+        try {
+            if (client != null && client.isConnected()) {
+                client.subscribe(topic, qos);
+                ILog.d(TAG, "Subscribed to topic: " + topic);
+            } else {
+                ILog.w(TAG, "Cannot subscribe, MQTT client is not connected");
+            }
+        } catch (MqttException e) {
+            ILog.e(TAG, "Failed to subscribe to MQTT topic: " + e.getMessage());
+        }
+    }
+
+    public synchronized void publish(String topic, byte[] payload, int qos, boolean retained) {
+        try {
+            if (client != null && client.isConnected()) {
+                MqttMessage message = new MqttMessage(payload);
+                message.setQos(qos);
+                message.setRetained(retained);
+                client.publish(topic, message);
+                ILog.d(TAG, "Published message to topic: " + topic);
+            } else {
+                ILog.w(TAG, "Cannot publish message, MQTT client is not connected");
+            }
+        } catch (MqttException e) {
+            ILog.e(TAG, "Failed to publish MQTT message: " + e.getMessage());
+        }
+    }
+
+    public synchronized void publish(String topic, String payload, int qos, boolean retained) {
+        publish(topic, payload.getBytes(), qos, retained);
     }
 
     @NotNull
