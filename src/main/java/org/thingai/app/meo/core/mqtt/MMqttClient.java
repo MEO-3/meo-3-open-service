@@ -1,9 +1,7 @@
 package org.thingai.app.meo.core.mqtt;
 
-import com.google.gson.JsonObject;
 import org.eclipse.paho.client.mqttv3.*;
 import org.jetbrains.annotations.NotNull;
-import org.thingai.app.meo.util.JsonUtil;
 import org.thingai.base.log.ILog;
 
 public class MMqttClient {
