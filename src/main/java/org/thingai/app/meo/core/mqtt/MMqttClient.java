@@ -1,47 +1,27 @@
-package org.thingai.app.meo.handler.mqtt;
+package org.thingai.app.meo.core.mqtt;
 
 import com.google.gson.JsonObject;
 import org.eclipse.paho.client.mqttv3.*;
-import org.thingai.app.meo.handler.telemetry.MTelemetryHandler;
+import org.jetbrains.annotations.NotNull;
 import org.thingai.app.meo.util.JsonUtil;
 import org.thingai.base.log.ILog;
 
-public class MMqttHandler {
+public class MMqttClient {
     private static final String TAG = "MMqttHandler";
 
-    private final String brokerUrl;
-    private final String clientId;
-    private final String username;   // optional: use for auth
-    private final String password;   // optional: use for auth
-
     private MqttClient client;
-    private MTelemetryHandler telemetryHandler;
+    private final MMqttConfig mqttConfig;
 
-    public MMqttHandler(String brokerUrl, String clientId, String username, String password) {
-        this.brokerUrl = brokerUrl;
-        this.clientId = clientId;
-        this.username = username;
-        this.password = password;
-    }
-
-    public void setTelemetryHandler(MTelemetryHandler telemetryHandler) {
-        this.telemetryHandler = telemetryHandler;
+    public MMqttClient(MMqttConfig config) {
+        this.mqttConfig = config;
     }
 
     public void connectAndSubscribe() {
         try {
-            ILog.d(TAG, "Connecting to MQTT broker: " + brokerUrl);
-            client = new MqttClient(brokerUrl, clientId, null);
+            ILog.d(TAG, "connectAndSubscribe", mqttConfig.getBrokerUrl());
+            client = new MqttClient(mqttConfig.getBrokerUrl(), mqttConfig.getClientId(), null);
 
-            MqttConnectOptions options = new MqttConnectOptions();
-            options.setAutomaticReconnect(true);
-            options.setCleanSession(true);
-            if (username != null && !username.isEmpty()) {
-                options.setUserName(username);
-            }
-            if (password != null && !password.isEmpty()) {
-                options.setPassword(password.toCharArray());
-            }
+            MqttConnectOptions options = getMqttConnectOptions();
 
             client.setCallback(new _MqttCallback());
             client.connect(options);
@@ -55,32 +35,9 @@ public class MMqttHandler {
         }
     }
 
-    // Publish feature invocation to device
-    public void publishFeatureInvoke(String deviceId, String featureName, JsonObject params) {
-        if (client == null || !client.isConnected()) {
-            ILog.e(TAG, "MQTT client not connected; cannot publish feature invoke");
-            return;
-        }
-
-        String topic = String.format("meo/%s/feature/%s/invoke", deviceId, featureName);
-
-        JsonObject payload = new JsonObject();
-        // Optionally generate a request_id here
-        payload.addProperty("request_id", "req-" + System.currentTimeMillis());
-        if (params != null) {
-            payload.add("params", params);
-        }
-
-        String json = JsonUtil.toJson(payload);
-
-        try {
-            ILog.d(TAG, "Publishing feature invoke to " + topic + ": " + json);
-            client.publish(topic, new MqttMessage(json.getBytes()));
-        } catch (MqttException e) {
-            ILog.e(TAG, "Failed to publish feature invoke: " + e.getMessage());
-        }
+    public MMqttConfig getMqttConfig() {
+        return mqttConfig;
     }
-
 
     private class _MqttCallback implements MqttCallback {
         @Override
@@ -130,6 +87,23 @@ public class MMqttHandler {
         public void deliveryComplete(IMqttDeliveryToken token) {
             // Optional logging
         }
+    }
+
+    @NotNull
+    private MqttConnectOptions getMqttConnectOptions() {
+        String username = mqttConfig.getUsername();
+        String password = mqttConfig.getPassword();
+
+        MqttConnectOptions options = new MqttConnectOptions();
+        options.setAutomaticReconnect(true);
+        options.setCleanSession(true);
+        if (username != null && !username.isEmpty()) {
+            options.setUserName(username);
+        }
+        if (password != null && !password.isEmpty()) {
+            options.setPassword(password.toCharArray());
+        }
+        return options;
     }
 
 }
