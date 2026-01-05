@@ -29,7 +29,7 @@ public class MMqttClient {
             ILog.e(TAG, "Failed to connect MQTT: " + e.getMessage());
         }
     }
-    
+
     public void disconnect() {
         try {
             if (client != null && client.isConnected()) {
