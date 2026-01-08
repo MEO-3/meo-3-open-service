@@ -20,7 +20,7 @@ import org.thingai.base.log.ILog;
 import org.thingai.meo.common.entity.MDevice;
 import org.thingai.app.meo.handler.device.MDeviceFeatureHandler;
 import org.thingai.app.meo.handler.device.MDeviceHandler;
-import org.thingai.app.meo.handler.MServiceHandler;
+import org.thingai.app.meo.handler.service.MServiceHandler;
 
 public class MeoService extends Service {
     private static final String TAG = "MeoService";
