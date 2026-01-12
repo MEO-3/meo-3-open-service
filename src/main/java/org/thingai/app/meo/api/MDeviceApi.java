@@ -75,4 +75,8 @@ public class MDeviceApi {
             }
         });
     }
+
+    // TODO (Control device features)
+    // TODO (Ping device status)
+    // TODO (Firmware update)
 }
