@@ -20,6 +20,9 @@ public class MDevice {
     @DaoColumn(name = "connection_type")
     private int connectionType;
 
+    @DaoColumn(name = "device_type")
+    private int deviceType;
+
     private String[] featureMethods;
     private String[] featureEvents;
 
@@ -89,5 +92,13 @@ public class MDevice {
 
     public void setFeatureEvents(String[] featureEvents) {
         this.featureEvents = featureEvents;
+    }
+
+    public int getDeviceType() {
+        return deviceType;
+    }
+
+    public void setDeviceType(int deviceType) {
+        this.deviceType = deviceType;
     }
 }

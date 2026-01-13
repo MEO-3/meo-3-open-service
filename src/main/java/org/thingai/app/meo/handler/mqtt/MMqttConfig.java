@@ -1,4 +1,4 @@
-package org.thingai.app.meo.core.mqtt;
+package org.thingai.app.meo.handler.mqtt;
 
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 

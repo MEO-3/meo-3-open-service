@@ -5,9 +5,9 @@ import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.jetbrains.annotations.NotNull;
-import org.thingai.app.meo.core.mqtt.MMqttConfig;
+import org.thingai.app.meo.handler.mqtt.MMqttConfig;
 import org.thingai.app.meo.handler.device.MDeviceConfigLanHandler;
-import org.thingai.app.meo.core.mqtt.MMqttClient;
+import org.thingai.app.meo.handler.mqtt.MMqttHandler;
 import org.thingai.app.meo.handler.telemetry.MTelemetryHandler;
 import org.thingai.app.meo.service.MeoDiscoverServiceLan;
 import org.thingai.base.Service;
@@ -68,13 +68,13 @@ public class MeoService extends Service {
         discoveryThread.start();
 
         // init MQTT client
-        MMqttClient mqttClient = getMMqttClient();
+        MMqttHandler mqttClient = getMMqttClient();
         mqttClient.connect();
     }
 
     @NotNull
-    private static MMqttClient getMMqttClient() {
-        MMqttClient mqttClient = new MMqttClient(new MMqttConfig(
+    private static MMqttHandler getMMqttClient() {
+        MMqttHandler mqttClient = new MMqttHandler(new MMqttConfig(
                 "tcp://localhost:1883",
                 null,
                 null,

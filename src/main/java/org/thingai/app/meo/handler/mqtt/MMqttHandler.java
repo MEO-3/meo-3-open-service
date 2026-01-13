@@ -1,16 +1,16 @@
-package org.thingai.app.meo.core.mqtt;
+package org.thingai.app.meo.handler.mqtt;
 
 import org.eclipse.paho.client.mqttv3.*;
 import org.jetbrains.annotations.NotNull;
 import org.thingai.base.log.ILog;
 
-public class MMqttClient {
+public class MMqttHandler {
     private static final String TAG = "MMqttHandler";
 
     private MqttClient client;
     private final MMqttConfig mqttConfig;
 
-    public MMqttClient(MMqttConfig config) {
+    public MMqttHandler(MMqttConfig config) {
         this.mqttConfig = config;
     }
 
