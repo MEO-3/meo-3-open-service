@@ -5,11 +5,11 @@ import org.thingai.base.dao.annotations.DaoTable;
 
 @DaoTable(name = "product_feature")
 public class MProductFeature {
-    @DaoColumn(name = "id", primaryKey = true, autoIncrement = true)
-    private int id; // internal unique id
+    @DaoColumn(name = "id", primaryKey = true)
+    private int id; // = product_id (12 bytes) + featureId (2 bytes) (14 bytes)
 
     @DaoColumn(name = "product_id")
-    private int productId;
+    private String productId;
 
     @DaoColumn(name = "feature_type")
     private int featureType;
@@ -25,14 +25,6 @@ public class MProductFeature {
 
     public MProductFeature() {
 
-    }
-
-    public int getProductId() {
-        return productId;
-    }
-
-    public void setProductId(int productId) {
-        this.productId = productId;
     }
 
     public int getFeatureType() {
@@ -73,5 +65,13 @@ public class MProductFeature {
 
     public void setId(int id) {
         this.id = id;
+    }
+
+    public String getProductId() {
+        return productId;
+    }
+
+    public void setProductId(String productId) {
+        this.productId = productId;
     }
 }

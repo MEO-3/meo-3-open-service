@@ -6,7 +6,7 @@ import org.thingai.base.dao.annotations.DaoTable;
 @DaoTable(name = "product")
 public class MProduct {
     @DaoColumn(name = "product_id", primaryKey = true)
-    private String productId;
+    private String productId; // 12-byte unique identifier
 
     @DaoColumn(name = "product_name")
     private String productName;
