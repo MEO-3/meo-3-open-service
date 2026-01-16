@@ -5,14 +5,17 @@ import org.thingai.base.dao.annotations.DaoTable;
 
 @DaoTable(name = "product_feature")
 public class MProductFeature {
-    @DaoColumn(name = "product_id", primaryKey = true)
+    @DaoColumn(name = "id", primaryKey = true, autoIncrement = true)
+    private int id; // internal unique id
+
+    @DaoColumn(name = "product_id")
     private int productId;
 
-    @DaoColumn(name = "feature_type", primaryKey = true)
+    @DaoColumn(name = "feature_type")
     private int featureType;
 
-    @DaoColumn(name = "feature_id", primaryKey = true)
-    private int featureId;
+    @DaoColumn(name = "feature_id")
+    private int featureId; // unique id for each feature type in a product (from 0 to 65535) (2 bytes)
 
     @DaoColumn(name = "feature_label")
     private String featureLabel;
@@ -62,5 +65,13 @@ public class MProductFeature {
 
     public void setJsonDocs(String jsonDocs) {
         this.jsonDocs = jsonDocs;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 }
