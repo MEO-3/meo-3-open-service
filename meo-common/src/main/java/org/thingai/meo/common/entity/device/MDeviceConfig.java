@@ -18,6 +18,14 @@ public abstract class MDeviceConfig {
         this.macAddress = macAddress;
     }
 
+    public String getProductId() {
+        return productId;
+    }
+
+    public void setProductId(String productId) {
+        this.productId = productId;
+    }
+
     public int getConnectionType() {
         return connectionType;
     }

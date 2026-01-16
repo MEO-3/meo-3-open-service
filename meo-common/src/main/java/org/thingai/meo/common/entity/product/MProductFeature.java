@@ -20,6 +20,10 @@ public class MProductFeature {
     @DaoColumn(name = "json_docs")
     private String jsonDocs;
 
+    public MProductFeature() {
+
+    }
+
     public int getProductId() {
         return productId;
     }
