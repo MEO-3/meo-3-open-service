@@ -14,6 +14,9 @@ public class MDeviceInfo {
     @DaoColumn(name = "build_number")
     private String buildNumber;
 
+    @DaoColumn(name = "mac_address")
+    private String macAddress;
+
     public MDeviceInfo() {
 
     }
@@ -25,7 +28,6 @@ public class MDeviceInfo {
     public void setDeviceId(String deviceId) {
         this.deviceId = deviceId;
     }
-
 
     public String getCompatibleAppVersion() {
         return compatibleAppVersion;
@@ -41,5 +43,13 @@ public class MDeviceInfo {
 
     public void setBuildNumber(String buildNumber) {
         this.buildNumber = buildNumber;
+    }
+
+    public String getMacAddress() {
+        return macAddress;
+    }
+
+    public void setMacAddress(String macAddress) {
+        this.macAddress = macAddress;
     }
 }

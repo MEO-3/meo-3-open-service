@@ -11,9 +11,6 @@ public class MDevice {
     @DaoColumn(name = "label")
     private String label;
 
-    @DaoColumn(name = "device_type")
-    private int deviceType;
-
     public MDevice() {
 
     }
@@ -32,13 +29,5 @@ public class MDevice {
 
     public void setId(String id) {
         this.id = id;
-    }
-
-    public int getDeviceType() {
-        return deviceType;
-    }
-
-    public void setDeviceType(int deviceType) {
-        this.deviceType = deviceType;
     }
 }
