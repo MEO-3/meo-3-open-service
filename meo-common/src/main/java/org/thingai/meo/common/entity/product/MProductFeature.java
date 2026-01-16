@@ -5,9 +5,6 @@ import org.thingai.base.dao.annotations.DaoTable;
 
 @DaoTable(name = "product_feature")
 public class MProductFeature {
-    @DaoColumn(name = "id", primaryKey = true)
-    private int id; // = product_id (12 bytes) + featureId (2 bytes) (14 bytes)
-
     @DaoColumn(name = "product_id")
     private String productId;
 
@@ -57,14 +54,6 @@ public class MProductFeature {
 
     public void setMdDocs(String mdDocs) {
         this.mdDocs = mdDocs;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
     }
 
     public String getProductId() {
