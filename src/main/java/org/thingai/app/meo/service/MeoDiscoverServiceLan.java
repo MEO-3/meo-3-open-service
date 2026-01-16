@@ -5,7 +5,7 @@ import com.google.gson.annotations.SerializedName;
 import org.thingai.app.meo.handler.device.MDeviceConfigLanHandler;
 import org.thingai.base.log.ILog;
 import org.thingai.meo.common.define.MConnectionType;
-import org.thingai.meo.common.entity.config.MDeviceConfigLan;
+import org.thingai.meo.common.entity.device.MDeviceConfigLan;
 
 import java.io.IOException;
 import java.net.DatagramPacket;

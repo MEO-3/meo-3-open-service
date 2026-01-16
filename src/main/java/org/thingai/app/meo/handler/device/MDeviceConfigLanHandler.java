@@ -3,10 +3,10 @@ package org.thingai.app.meo.handler.device;
 import org.thingai.base.log.ILog;
 import org.thingai.meo.common.callback.MDeviceConfigCallback;
 import org.thingai.meo.common.callback.MRequestCallback;
-import org.thingai.meo.common.entity.MDevice;
+import org.thingai.meo.common.entity.device.MDevice;
 
 import org.thingai.app.meo.util.ByteUtil;
-import org.thingai.meo.common.entity.config.MDeviceConfigLan;
+import org.thingai.meo.common.entity.device.MDeviceConfigLan;
 import org.thingai.meo.common.handler.MDeviceConfigHandler;
 
 import java.io.PrintWriter;

@@ -2,9 +2,9 @@ package org.thingai.app.meo.handler.device;
 
 import org.thingai.base.dao.Dao;
 import org.thingai.base.log.ILog;
-import org.thingai.meo.common.entity.MDevice;
-import org.thingai.meo.common.entity.feature.MDeviceFeatureEvent;
-import org.thingai.meo.common.entity.feature.MDeviceFeatureMethod;
+import org.thingai.meo.common.entity.device.MDevice;
+import org.thingai.meo.common.entity.feature.MProductFeatureEvent;
+import org.thingai.meo.common.entity.feature.MProductFeatureMethod;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -42,8 +42,8 @@ public class MDeviceHandler {
             return null;
         }
 
-        MDeviceFeatureEvent[] featureEvents = featureHandler.getDeviceFeatureEvents(id);
-        MDeviceFeatureMethod[] featureMethods = featureHandler.getDeviceFeatureMethods(id);
+        MProductFeatureEvent[] featureEvents = featureHandler.getDeviceFeatureEvents(id);
+        MProductFeatureMethod[] featureMethods = featureHandler.getDeviceFeatureMethods(id);
 
         String[] events = new String[featureEvents.length];
         for (int i = 0; i < featureEvents.length; i++) {

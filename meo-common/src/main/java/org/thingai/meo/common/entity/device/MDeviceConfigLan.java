@@ -1,4 +1,4 @@
-package org.thingai.meo.common.entity.config;
+package org.thingai.meo.common.entity.device;
 
 public class MDeviceConfigLan extends MDeviceConfig {
     private String[] mDnsServices;

@@ -1,8 +1,9 @@
-package org.thingai.meo.common.entity.config;
+package org.thingai.meo.common.entity.device;
 
 // This object hold in list when a device is discovered
 public abstract class MDeviceConfig {
     protected String macAddress;
+    protected String productId;
     protected String manufacturer;
     protected String model;
     protected int connectionType;

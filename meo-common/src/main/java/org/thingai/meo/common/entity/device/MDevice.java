@@ -1,4 +1,4 @@
-package org.thingai.meo.common.entity;
+package org.thingai.meo.common.entity.device;
 
 import org.thingai.base.dao.annotations.DaoColumn;
 import org.thingai.base.dao.annotations.DaoTable;

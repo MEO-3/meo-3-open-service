@@ -12,12 +12,12 @@ import org.thingai.app.meo.handler.telemetry.MTelemetryHandler;
 import org.thingai.app.meo.service.MeoDiscoverServiceLan;
 import org.thingai.base.Service;
 import org.thingai.base.dao.Dao;
-import org.thingai.meo.common.entity.feature.MDeviceFeatureEvent;
-import org.thingai.meo.common.entity.feature.MDeviceFeatureMethod;
+import org.thingai.meo.common.entity.feature.MProductFeatureEvent;
+import org.thingai.meo.common.entity.feature.MProductFeatureMethod;
 import org.thingai.platform.dao.DaoFile;
 import org.thingai.platform.dao.DaoSqlite;
 import org.thingai.base.log.ILog;
-import org.thingai.meo.common.entity.MDevice;
+import org.thingai.meo.common.entity.device.MDevice;
 import org.thingai.app.meo.handler.device.MDeviceFeatureHandler;
 import org.thingai.app.meo.handler.device.MDeviceHandler;
 import org.thingai.app.meo.handler.service.MServiceHandler;
@@ -50,8 +50,8 @@ public class MeoService extends Service {
 
         dao.initDao(new Class[]{
             MDevice.class,
-            MDeviceFeatureEvent.class,
-            MDeviceFeatureMethod.class
+            MProductFeatureEvent.class,
+            MProductFeatureMethod.class
         });
 
         // init handlers
