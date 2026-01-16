@@ -20,8 +20,8 @@ public class MProductFeature {
     @DaoColumn(name = "feature_label")
     private String featureLabel;
 
-    @DaoColumn(name = "json_docs")
-    private String jsonDocs;
+    @DaoColumn(name = "md_docs")
+    private String mdDocs;
 
     public MProductFeature() {
 
@@ -51,12 +51,12 @@ public class MProductFeature {
         this.featureLabel = featureLabel;
     }
 
-    public String getJsonDocs() {
-        return jsonDocs;
+    public String getMdDocs() {
+        return mdDocs;
     }
 
-    public void setJsonDocs(String jsonDocs) {
-        this.jsonDocs = jsonDocs;
+    public void setMdDocs(String mdDocs) {
+        this.mdDocs = mdDocs;
     }
 
     public int getId() {
