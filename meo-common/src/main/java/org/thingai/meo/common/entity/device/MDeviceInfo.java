@@ -14,8 +14,20 @@ public class MDeviceInfo {
     @DaoColumn(name = "build_number")
     private String buildNumber;
 
+    @DaoColumn(name = "firmware_version")
+    private String firmwareVersion;
+
     @DaoColumn(name = "mac_address")
     private String macAddress;
+
+    @DaoColumn(name = "device_type")
+    private String deviceType;
+
+    @DaoColumn(name = "connection_type")
+    private String connectionType;
+
+    @DaoColumn(name = "model")
+    private String model;
 
     public MDeviceInfo() {
 
@@ -51,5 +63,37 @@ public class MDeviceInfo {
 
     public void setMacAddress(String macAddress) {
         this.macAddress = macAddress;
+    }
+
+    public String getFirmwareVersion() {
+        return firmwareVersion;
+    }
+
+    public void setFirmwareVersion(String firmwareVersion) {
+        this.firmwareVersion = firmwareVersion;
+    }
+
+    public String getModel() {
+        return model;
+    }
+
+    public void setModel(String model) {
+        this.model = model;
+    }
+
+    public String getDeviceType() {
+        return deviceType;
+    }
+
+    public void setDeviceType(String deviceType) {
+        this.deviceType = deviceType;
+    }
+
+    public String getConnectionType() {
+        return connectionType;
+    }
+
+    public void setConnectionType(String connectionType) {
+        this.connectionType = connectionType;
     }
 }

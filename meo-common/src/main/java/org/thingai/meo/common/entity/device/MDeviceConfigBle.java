@@ -4,6 +4,7 @@ import java.util.HashMap;
 
 public class MDeviceConfigBle extends MDeviceConfig {
     private String bleAddress;
+    private String bleName;
     private String serviceUuid;
     private HashMap<String, String> characteristicUuids; // key: characteristic name, value: UUID
 
@@ -29,5 +30,13 @@ public class MDeviceConfigBle extends MDeviceConfig {
 
     public void setCharacteristicUuids(HashMap<String, String> characteristicUuids) {
         this.characteristicUuids = characteristicUuids;
+    }
+
+    public String getBleName() {
+        return bleName;
+    }
+
+    public void setBleName(String bleName) {
+        this.bleName = bleName;
     }
 }

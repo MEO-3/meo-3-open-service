@@ -11,6 +11,12 @@ public class MDevice {
     @DaoColumn(name = "label")
     private String label;
 
+    @DaoColumn(name = "product_id")
+    private String productId;
+
+    @DaoColumn(name = "user_id")
+    private String userId;
+
     public MDevice() {
 
     }
@@ -29,5 +35,21 @@ public class MDevice {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public String getProductId() {
+        return productId;
+    }
+
+    public void setProductId(String productId) {
+        this.productId = productId;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
     }
 }

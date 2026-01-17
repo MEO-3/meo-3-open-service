@@ -5,7 +5,7 @@ import io.javalin.http.Context;
 import org.thingai.app.meo.util.JsonUtil;
 import org.thingai.base.log.ILog;
 import org.thingai.app.meo.MeoService;
-import org.thingai.meo.common.callback.MRequestCallback;
+import org.thingai.meo.common.callback.RequestCallback;
 import org.thingai.meo.common.entity.device.MDevice;
 import org.thingai.meo.common.entity.device.MDeviceConfigLan;
 
@@ -43,40 +43,4 @@ public class MDeviceApi {
         ctx.result("Updated device label for ID: " + deviceId);
         ctx.status(200);
     }
-
-    // Discovery
-    public static void getDiscoveredDevices(Context ctx) {
-        MDeviceConfigLan[] devices = MeoService.discoverHandler().getDeviceConfig();
-        ctx.json(devices);
-        ctx.status(200);
-    }
-
-    public static void registerDevice(Context ctx) {
-        String body = ctx.body();
-
-        ILog.d("MDeviceController", "Register device request body: " + body);
-
-        JsonObject bodyJson = JsonUtil.fromJson(body, JsonObject.class);
-        int index = bodyJson.get("index").getAsInt();
-        String label = bodyJson.get("label").getAsString();
-
-        MeoService.discoverHandler().registerDevice(index, label, new MRequestCallback<MDevice>() {
-            @Override
-            public void onSuccess(MDevice result, String message) {
-                ILog.d("MDeviceController", "Device registered: " + JsonUtil.toJson(result));
-                ctx.json(result);
-                ctx.status(201);
-            }
-
-            @Override
-            public void onFailure(int errorCode, String errorMessage) {
-                ILog.e("MDeviceController", "Device registration failed: " + errorMessage);
-                ctx.status(500).result("Device registration failed: " + errorMessage);
-            }
-        });
-    }
-
-    // TODO (Control device features)
-    // TODO (Ping device status)
-    // TODO (Firmware update)
 }
