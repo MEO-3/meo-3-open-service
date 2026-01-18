@@ -1,12 +1,12 @@
 package org.thingai.meo.common.dto.product;
 
-public class RequestProductCreate {
+public class RequestProductUpsert {
     private String productName;
     private String manufacturer;
     private Integer deviceType;
     private Integer connectionType;
 
-    public RequestProductCreate() {}
+    public RequestProductUpsert() {}
 
     public String getProductName() { return productName; }
     public void setProductName(String productName) { this.productName = productName; }
