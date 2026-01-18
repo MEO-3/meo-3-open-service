@@ -14,7 +14,8 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
-    implementation(files("../libs/applicationbase.jar"))
+    compileOnly(files("../libs/applicationbase.jar"))
+    compileOnly("com.google.code.gson:gson:2.13.2")
 }
 
 tasks.test {
