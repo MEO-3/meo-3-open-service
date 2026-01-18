@@ -15,7 +15,7 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
     compileOnly(files("../libs/applicationbase.jar"))
-    compileOnly("com.google.code.gson:gson:2.13.2")
+    implementation("com.google.code.gson:gson:2.13.2")
 }
 
 tasks.test {
