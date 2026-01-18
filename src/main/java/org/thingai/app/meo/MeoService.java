@@ -6,14 +6,11 @@ import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.jetbrains.annotations.NotNull;
 import org.thingai.app.meo.handler.mqtt.MMqttConfig;
-import org.thingai.app.meo.handler.device.MDeviceConfigLanHandler;
 import org.thingai.app.meo.handler.mqtt.MMqttHandler;
 import org.thingai.app.meo.handler.telemetry.MTelemetryHandler;
 import org.thingai.app.meo.service.MeoDiscoverServiceLan;
 import org.thingai.base.Service;
 import org.thingai.base.dao.Dao;
-import org.thingai.meo.common.entity.feature.MProductFeatureEvent;
-import org.thingai.meo.common.entity.feature.MProductFeatureMethod;
 import org.thingai.platform.dao.DaoFile;
 import org.thingai.platform.dao.DaoSqlite;
 import org.thingai.base.log.ILog;
@@ -28,7 +25,6 @@ public class MeoService extends Service {
 
     private static MServiceHandler serviceHandler;
     private static MDeviceHandler deviceManager;
-    private static MDeviceConfigLanHandler discoverHandler;
     private static MDeviceFeatureHandler featureHandler;
     private static MTelemetryHandler telemetryHandler;
 
@@ -50,19 +46,16 @@ public class MeoService extends Service {
 
         dao.initDao(new Class[]{
             MDevice.class,
-            MProductFeatureEvent.class,
-            MProductFeatureMethod.class
         });
 
         // init handlers
         featureHandler = new MDeviceFeatureHandler(dao);
-        deviceManager = new MDeviceHandler(dao, featureHandler);
+        deviceManager = new MDeviceHandler();
         serviceHandler = new MServiceHandler();
-        discoverHandler = new MDeviceConfigLanHandler(10, deviceManager);
         telemetryHandler = new MTelemetryHandler();
 
         // start device discovery service
-        MeoDiscoverServiceLan discoveryService = new MeoDiscoverServiceLan(8901, discoverHandler);
+        MeoDiscoverServiceLan discoveryService = new MeoDiscoverServiceLan();
         Thread discoveryThread = new Thread(discoveryService);
         discoveryThread.setDaemon(true);
         discoveryThread.start();
@@ -107,10 +100,6 @@ public class MeoService extends Service {
 
     public static MDeviceHandler deviceManager() {
         return deviceManager;
-    }
-
-    public static MDeviceConfigLanHandler discoverHandler() {
-        return discoverHandler;
     }
 
     public static MDeviceFeatureHandler featureHandler() {

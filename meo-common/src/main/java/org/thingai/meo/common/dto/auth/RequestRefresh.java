@@ -1,6 +1,9 @@
 package org.thingai.meo.common.dto.auth;
 
+import com.google.gson.annotations.SerializedName;
+
 public class RequestRefresh {
+    @SerializedName("refresh_token")
     private String refreshToken;
 
     public RequestRefresh() {}

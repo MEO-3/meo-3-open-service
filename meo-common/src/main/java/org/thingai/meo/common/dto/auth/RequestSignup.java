@@ -1,9 +1,13 @@
 package org.thingai.meo.common.dto.auth;
 
+import com.google.gson.annotations.SerializedName;
+
 public class RequestSignup {
     private String username;
     private String email;
+    @SerializedName("phone_number")
     private String phoneNumber;
+    @SerializedName("auth_username")
     private String authUsername;
     private String password;
 

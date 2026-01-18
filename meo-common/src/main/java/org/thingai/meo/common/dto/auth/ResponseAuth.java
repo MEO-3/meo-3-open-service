@@ -1,8 +1,15 @@
 package org.thingai.meo.common.dto.auth;
 
+import com.google.gson.annotations.SerializedName;
+
 public class ResponseAuth {
+    @SerializedName("access_token")
     private String accessToken;
+
+    @SerializedName("refresh_token")
     private String refreshToken;
+
+    @SerializedName("token_type")
     private String tokenType = "bearer";
 
     public ResponseAuth() {}
