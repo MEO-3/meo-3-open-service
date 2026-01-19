@@ -1,7 +1,7 @@
 package org.thingai.meo.common.dto;
 
 public class ResponseOk {
-    private boolean ok;
+    private Boolean ok;
     private String detail;
 
     public boolean isOk() {
