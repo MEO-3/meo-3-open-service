@@ -11,20 +11,17 @@ public class MDeviceInfo {
     @DaoColumn(name = "compatible_app_version")
     private String compatibleAppVersion;
 
-    @DaoColumn(name = "build_number")
-    private String buildNumber;
-
-    @DaoColumn(name = "firmware_version")
-    private String firmwareVersion;
+    @DaoColumn(name = "build_info")
+    private String buildInfo;
 
     @DaoColumn(name = "mac_address")
     private String macAddress;
 
     @DaoColumn(name = "device_type")
-    private String deviceType;
+    private int deviceType;
 
     @DaoColumn(name = "connection_type")
-    private String connectionType;
+    private int connectionType;
 
     @DaoColumn(name = "model")
     private String model;
@@ -49,14 +46,6 @@ public class MDeviceInfo {
         this.compatibleAppVersion = compatibleAppVersion;
     }
 
-    public String getBuildNumber() {
-        return buildNumber;
-    }
-
-    public void setBuildNumber(String buildNumber) {
-        this.buildNumber = buildNumber;
-    }
-
     public String getMacAddress() {
         return macAddress;
     }
@@ -65,13 +54,6 @@ public class MDeviceInfo {
         this.macAddress = macAddress;
     }
 
-    public String getFirmwareVersion() {
-        return firmwareVersion;
-    }
-
-    public void setFirmwareVersion(String firmwareVersion) {
-        this.firmwareVersion = firmwareVersion;
-    }
 
     public String getModel() {
         return model;
@@ -81,19 +63,27 @@ public class MDeviceInfo {
         this.model = model;
     }
 
-    public String getDeviceType() {
+    public int getDeviceType() {
         return deviceType;
     }
 
-    public void setDeviceType(String deviceType) {
+    public void setDeviceType(int deviceType) {
         this.deviceType = deviceType;
     }
 
-    public String getConnectionType() {
+    public int getConnectionType() {
         return connectionType;
     }
 
-    public void setConnectionType(String connectionType) {
+    public void setConnectionType(int connectionType) {
         this.connectionType = connectionType;
+    }
+
+    public String getBuildInfo() {
+        return buildInfo;
+    }
+
+    public void setBuildInfo(String buildInfo) {
+        this.buildInfo = buildInfo;
     }
 }
