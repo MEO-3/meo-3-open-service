@@ -1,13 +1,13 @@
 package org.thingai.app.meo.handler.device;
 
 import org.thingai.meo.common.callback.RequestCallback;
-import org.thingai.meo.common.callback.SetupDeviceCallback;
 import org.thingai.meo.common.entity.device.MDevice;
 import org.thingai.meo.common.entity.device.MDeviceConfigLan;
-import org.thingai.meo.common.handler.MDeviceDiscoveryLanHandler;
+import org.thingai.meo.common.entity.device.MDeviceInfo;
+import org.thingai.meo.common.handler.MDeviceDiscoveryHandlerLan;
 
 
-public class MDeviceDiscoveryLanHandlerImpl extends MDeviceDiscoveryLanHandler {
+public class MDeviceDiscoveryLanHandlerImpl extends MDeviceDiscoveryHandlerLan {
 
     @Override
     public boolean discovery() {
@@ -20,12 +20,7 @@ public class MDeviceDiscoveryLanHandlerImpl extends MDeviceDiscoveryLanHandler {
     }
 
     @Override
-    public void onDeviceFound(RequestCallback<MDeviceConfigLan> callback) {
-
-    }
-
-    @Override
-    public void connectAndIdentifyDevice(MDeviceConfigLan deviceConfig, SetupDeviceCallback callback) {
+    public void connectAndIdentifyDevice(MDeviceConfigLan mDeviceConfigLan, RequestCallback<MDeviceInfo> requestCallback) {
 
     }
 
