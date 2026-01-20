@@ -1,12 +1,11 @@
 package org.thingai.meo.common.entity.device;
 
-import java.util.HashMap;
-
 public class MDeviceConfigBle extends MDeviceConfig {
     private String bleAddress;
     private String bleName;
     private String serviceUuid;
-    private HashMap<String, String> characteristicUuids; // key: characteristic name, value: UUID
+    private int rssi;
+    private boolean hasConfigService;
 
     public String getBleAddress() {
         return bleAddress;
@@ -24,19 +23,27 @@ public class MDeviceConfigBle extends MDeviceConfig {
         this.serviceUuid = serviceUuid;
     }
 
-    public HashMap<String, String> getCharacteristicUuids() {
-        return characteristicUuids;
-    }
-
-    public void setCharacteristicUuids(HashMap<String, String> characteristicUuids) {
-        this.characteristicUuids = characteristicUuids;
-    }
-
     public String getBleName() {
         return bleName;
     }
 
     public void setBleName(String bleName) {
         this.bleName = bleName;
+    }
+
+    public int getRssi() {
+        return rssi;
+    }
+
+    public void setRssi(int rssi) {
+        this.rssi = rssi;
+    }
+
+    public boolean isHasConfigService() {
+        return hasConfigService;
+    }
+
+    public void setHasConfigService(boolean hasConfigService) {
+        this.hasConfigService = hasConfigService;
     }
 }
