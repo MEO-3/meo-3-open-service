@@ -4,6 +4,7 @@ public class ResponseDevice {
     private String id;
     private String label;
     private String productId;
+    private String userId;
 
     public String getId() {
         return id;
@@ -27,5 +28,13 @@ public class ResponseDevice {
 
     public void setProductId(String productId) {
         this.productId = productId;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
     }
 }

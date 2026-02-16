@@ -18,5 +18,7 @@ public class MBleUuid {
     public static final UUID CH_UUID_MAC_ADDR = u16(0xF7F7);
     public static final UUID CH_UUID_DEV_MODEL = u16(0xF7F8);
     public static final UUID CH_UUID_DEV_MANUF = u16(0xF7F9);
+
     public static final UUID CH_UUID_TX_KEY = u16(0xF7FA);
+    public static final UUID CH_UUID_DEV_ID = u16(0xF7FB);
 }
