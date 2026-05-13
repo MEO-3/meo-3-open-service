@@ -28,7 +28,7 @@ dependencies {
     implementation("com.zaxxer:HikariCP:5.1.0")
 
     // mqtt client
-    implementation("org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.5")
+    implementation("org.eclipse.paho:org.eclipse.paho.mqttv5.client:1.2.5")
 
     implementation(files("libs/applicationbase.jar"))
     implementation(files("libs/edgeplatform.jar"))
