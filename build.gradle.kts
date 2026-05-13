@@ -31,7 +31,7 @@ dependencies {
 
     implementation(files("meo-common/build/libs/meo-common.jar"))
     implementation(files("libs/applicationbase.jar"))
-    implementation(files("libs/desktopplatform.jar"))
+    implementation(files("libs/edgeplatform.jar"))
     implementation(files("libs/aibase.jar"))
 }
 
