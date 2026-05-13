@@ -1,3 +1,5 @@
+import org.gradle.internal.impldep.bsh.commands.dir
+
 plugins {
     id("java")
 }
@@ -7,6 +9,9 @@ version = "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
+    flatDir {
+        dirs("libs")
+    }
 }
 
 dependencies {
@@ -17,11 +22,7 @@ dependencies {
     implementation("org.slf4j:slf4j-simple:2.0.16")
     implementation("com.google.code.gson:gson:2.13.2")
 
-    implementation("com.fasterxml.jackson.core:jackson-core:2.17.2")
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.17.2")
-    implementation("com.fasterxml.jackson.core:jackson-annotations:2.17.2")
-
-    implementation("io.javalin:javalin:6.7.0")
+    implementation("io.javalin:javalin:7.2.0")
     implementation("org.jmdns:jmdns:3.5.12")
 
     implementation("com.zaxxer:HikariCP:5.1.0")
@@ -29,12 +30,11 @@ dependencies {
     // mqtt client
     implementation("org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.5")
 
-    implementation(files("meo-common/build/libs/meo-common.jar"))
     implementation(files("libs/applicationbase.jar"))
     implementation(files("libs/edgeplatform.jar"))
     implementation(files("libs/aibase.jar"))
 }
 
 tasks.test {
-    useJUnitPlatform()
+
 }
