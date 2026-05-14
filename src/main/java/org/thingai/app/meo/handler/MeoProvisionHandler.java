@@ -11,8 +11,10 @@ import org.thingai.app.meo.define.BleUuid;
 import org.thingai.app.meo.entity.MeoDeviceProvision;
 import org.thingai.app.meo.handler.callback.RequestCallback;
 import org.thingai.app.meo.util.JsonUtil;
+import org.thingai.base.log.ILog;
 
 public class MeoProvisionHandler {
+    private static final String TAG = "MeoProvisionHandler";
     private static final String DEFAULT_ENCODING = "utf8";
 
     private final BlemqttClient blemqttClient;
@@ -22,6 +24,7 @@ public class MeoProvisionHandler {
     }
 
     public void scanProvisionableDevices(int timeoutMs, String namePrefix, RequestCallback<BlemqttReply> callback) {
+        ILog.i(TAG, "scanProvisionableDevices", "timeoutMs=" + timeoutMs, "namePrefix=" + namePrefix);
         JsonObject params = new JsonObject();
         params.addProperty("timeoutMs", timeoutMs);
         params.addProperty("serviceUuid", BleUuid.MEO_DEVICE_PROVISION_SERVICE);
@@ -33,6 +36,7 @@ public class MeoProvisionHandler {
     }
 
     public void connect(MeoDeviceProvision provision, RequestCallback<MeoDeviceProvision> callback) {
+        ILog.i(TAG, "connect", addressLog(provision));
         if (!validateAddress(provision, callback)) {
             return;
         }
@@ -47,6 +51,7 @@ public class MeoProvisionHandler {
     }
 
     public void readDeviceMac(MeoDeviceProvision provision, RequestCallback<MeoDeviceProvision> callback) {
+        ILog.i(TAG, "readDeviceMac", addressLog(provision));
         if (!validateAddress(provision, callback)) {
             return;
         }
@@ -56,11 +61,13 @@ public class MeoProvisionHandler {
                 reply -> {
                     provision.setMacAddress(readReplyValue(reply));
                     provision.setMessage("device MAC read");
+                    ILog.i(TAG, "readDeviceMac", "macAddress=" + provision.getMacAddress());
                     return provision;
                 });
     }
 
     public void readProductId(MeoDeviceProvision provision, RequestCallback<MeoDeviceProvision> callback) {
+        ILog.i(TAG, "readProductId", addressLog(provision));
         if (!validateAddress(provision, callback)) {
             return;
         }
@@ -70,6 +77,7 @@ public class MeoProvisionHandler {
                 reply -> {
                     provision.setProductId(readReplyValue(reply));
                     provision.setMessage("product ID read");
+                    ILog.i(TAG, "readProductId", "productId=" + provision.getProductId());
                     return provision;
                 });
     }
@@ -80,6 +88,7 @@ public class MeoProvisionHandler {
             String password,
             RequestCallback<MeoDeviceProvision> callback
     ) {
+        ILog.i(TAG, "writeWifiConfig", addressLog(provision), "ssid=" + ssid);
         if (!validateAddress(provision, callback)) {
             return;
         }
@@ -101,11 +110,13 @@ public class MeoProvisionHandler {
         send(provision, BlemqttCommand.create(BlemqttOp.GATT_WRITE, params), callback, "write Wi-Fi config",
                 reply -> {
                     provision.setMessage("Wi-Fi config written");
+                    ILog.i(TAG, "writeWifiConfig", "Wi-Fi config written");
                     return provision;
                 });
     }
 
     public void readProvisionStatus(MeoDeviceProvision provision, RequestCallback<MeoDeviceProvision> callback) {
+        ILog.i(TAG, "readProvisionStatus", addressLog(provision));
         if (!validateAddress(provision, callback)) {
             return;
         }
@@ -116,11 +127,13 @@ public class MeoProvisionHandler {
                     String status = readReplyValue(reply);
                     provision.setProvisionStatus(status);
                     provision.setMessage(status);
+                    ILog.i(TAG, "readProvisionStatus", "status=" + status);
                     return provision;
                 });
     }
 
     public void disconnect(MeoDeviceProvision provision, RequestCallback<MeoDeviceProvision> callback) {
+        ILog.i(TAG, "disconnect", addressLog(provision));
         if (!validateAddress(provision, callback)) {
             return;
         }
@@ -130,6 +143,7 @@ public class MeoProvisionHandler {
                 reply -> {
                     provision.setStatus(MeoDeviceProvision.STATUS_DISCONNECTED_BLE);
                     provision.setMessage("BLE device disconnected");
+                    ILog.i(TAG, "disconnect", "BLE device disconnected");
                     return provision;
                 });
     }
@@ -154,13 +168,18 @@ public class MeoProvisionHandler {
     }
 
     private void sendRaw(BlemqttCommand command, RequestCallback<BlemqttReply> callback, String message) {
+        ILog.d(TAG, "sendRaw", command.getOp(), command.getRequestId());
         blemqttClient.send(command).thenAccept(reply -> {
             if (reply.isOk()) {
+                ILog.d(TAG, "sendRaw", "ok", command.getOp(), command.getRequestId());
                 callback.onResult(reply, message);
             } else {
-                callback.onFailure(toException(reply), message);
+                RuntimeException exception = toException(reply);
+                ILog.w(TAG, "sendRaw", exception.getMessage());
+                callback.onFailure(exception, message);
             }
         }).exceptionally(throwable -> {
+            ILog.e(TAG, "sendRaw", throwable);
             callback.onFailure(throwable, message);
             return null;
         });
@@ -173,6 +192,7 @@ public class MeoProvisionHandler {
             String message,
             ReplyMapper mapper
     ) {
+        ILog.d(TAG, "send", command.getOp(), command.getRequestId(), addressLog(provision));
         blemqttClient.send(command).thenAccept(reply -> {
             if (!reply.isOk()) {
                 fail(provision, callback, toException(reply), message);
@@ -207,6 +227,7 @@ public class MeoProvisionHandler {
             Throwable throwable,
             String message
     ) {
+        ILog.e(TAG, "fail", throwable);
         if (provision != null) {
             provision.setStatus(MeoDeviceProvision.STATUS_FAILED);
             provision.setMessage(message);
@@ -243,6 +264,13 @@ public class MeoProvisionHandler {
             }
         }
         return object.toString();
+    }
+
+    private String addressLog(MeoDeviceProvision provision) {
+        if (provision == null) {
+            return "bleAddress=null";
+        }
+        return "bleAddress=" + provision.getBleAddress();
     }
 
     private interface ReplyMapper {

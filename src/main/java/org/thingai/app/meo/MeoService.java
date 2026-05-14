@@ -2,7 +2,9 @@ package org.thingai.app.meo;
 
 
 import org.thingai.base.Service;
+import org.thingai.base.dao.Dao;
 import org.thingai.base.log.ILog;
+import org.thingai.platform.dao.DaoSqlite;
 
 public class MeoService extends Service {
     private static final String TAG = "MeoService";
@@ -18,6 +20,7 @@ public class MeoService extends Service {
 
     @Override
     protected void onServiceInit() {
+        Dao dao = new DaoSqlite(getAppDir()+"/meo.db");
 
     }
 }
