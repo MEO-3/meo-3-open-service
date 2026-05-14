@@ -48,6 +48,7 @@ import com.google.gson.JsonObject;
 JsonObject params = new JsonObject();
 params.addProperty("timeoutMs", 8000);
 params.addProperty("namePrefix", "MEO-Setup-");
+params.addProperty("serviceUuid", "7f5a0000-0f23-4b6a-9f5e-3c2a9f7e0100");
 
 BlemqttCommand command = BlemqttCommand.create(BlemqttOp.SCAN_START, params);
 client.send(command).thenAccept(reply -> {
@@ -56,6 +57,8 @@ client.send(command).thenAccept(reply -> {
     }
 });
 ```
+
+`namePrefix` and `serviceUuid` are optional generic scan filters. If both are present, the BLE service returns only devices matching both filters.
 
 ## Adapter Power Example
 

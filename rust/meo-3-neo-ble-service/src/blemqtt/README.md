@@ -145,10 +145,13 @@ Start scanning:
   "op": "scan.start",
   "params": {
     "timeoutMs": 8000,
-    "namePrefix": "MEO-Setup-"
+    "namePrefix": "MEO-Setup-",
+    "serviceUuid": "7f5a0000-0f23-4b6a-9f5e-3c2a9f7e0100"
   }
 }
 ```
+
+`scan.start` filters are optional. `namePrefix` filters by advertised device name. `serviceUuid` filters by advertised service UUID. If both are provided, both must match. If neither is provided, discovery returns all devices found during the timeout.
 
 Connect to a device:
 
@@ -198,7 +201,7 @@ Write a characteristic:
 MEO provisioning should be implemented as a higher-level workflow outside this protocol:
 
 1. Send `adapter.power`.
-2. Send `scan.start` with `namePrefix: "MEO-Setup-"`.
+2. Send `scan.start` with the MEO provisioning `serviceUuid` and optional `namePrefix`.
 3. Listen for `scan.device_found` events.
 4. Send `device.connect`.
 5. Send `gatt.read` to read device info.

@@ -1,7 +1,7 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashSet};
 use std::time::{Duration, Instant};
 
-use bluer::{Adapter, AdapterEvent, Address, Session};
+use bluer::{Adapter, AdapterEvent, Address, DiscoveryFilter, DiscoveryTransport, Session, Uuid};
 use futures_util::StreamExt;
 
 use crate::ble::device::{AdapterStatus, BleDevice, ScanStartParams};
@@ -53,6 +53,10 @@ impl BleManager {
     pub async fn scan_start(&self, params: ScanStartParams) -> BleResult<Vec<BleDevice>> {
         let timeout = Duration::from_millis(params.timeout_ms.unwrap_or(8_000));
         let name_prefix = params.name_prefix;
+        let service_uuid = match params.service_uuid.as_deref() {
+            Some(value) if !value.is_empty() => Some(value.parse::<Uuid>()?),
+            _ => None,
+        };
         let session = Session::new().await?;
         let adapter = session.default_adapter().await?;
 
@@ -64,12 +68,17 @@ impl BleManager {
         self.log.info(
             TAG,
             &format!(
-                "scan start adapter={} timeout_ms={} name_prefix={:?}",
+                "scan start adapter={} timeout_ms={} name_prefix={:?} service_uuid={:?}",
                 adapter.name(),
                 timeout.as_millis(),
-                name_prefix
+                name_prefix,
+                service_uuid
             ),
         );
+
+        adapter
+            .set_discovery_filter(Self::discovery_filter(service_uuid))
+            .await?;
 
         let mut devices = BTreeMap::<String, BleDevice>::new();
         let mut stream = adapter.discover_devices().await?;
@@ -85,7 +94,7 @@ impl BleManager {
             match tokio::time::timeout(remaining, stream.next()).await {
                 Ok(Some(AdapterEvent::DeviceAdded(address))) => {
                     if let Some(device) = self
-                        .read_device(&adapter, address, name_prefix.as_deref())
+                        .read_device(&adapter, address, name_prefix.as_deref(), service_uuid)
                         .await?
                     {
                         self.log.debug(TAG, &format!("scan device: {:?}", device));
@@ -111,7 +120,7 @@ impl BleManager {
         let mut devices = Vec::with_capacity(addresses.len());
 
         for address in addresses {
-            if let Some(device) = self.read_device(&adapter, address, None).await? {
+            if let Some(device) = self.read_device(&adapter, address, None, None).await? {
                 devices.push(device);
             }
         }
@@ -137,14 +146,29 @@ impl BleManager {
         })
     }
 
+    fn discovery_filter(service_uuid: Option<Uuid>) -> DiscoveryFilter {
+        let mut uuids = HashSet::new();
+        if let Some(uuid) = service_uuid {
+            uuids.insert(uuid);
+        }
+
+        DiscoveryFilter {
+            uuids,
+            transport: DiscoveryTransport::Le,
+            ..Default::default()
+        }
+    }
+
     async fn read_device(
         &self,
         adapter: &Adapter,
         address: Address,
         name_prefix: Option<&str>,
+        service_uuid: Option<Uuid>,
     ) -> BleResult<Option<BleDevice>> {
         let device = adapter.device(address)?;
         let name = device.name().await.unwrap_or(None);
+        let service_uuids_set = device.uuids().await.unwrap_or(None).unwrap_or_default();
 
         if let Some(prefix) = name_prefix {
             if !name.as_deref().unwrap_or_default().starts_with(prefix) {
@@ -152,10 +176,23 @@ impl BleManager {
             }
         }
 
+        if let Some(uuid) = service_uuid {
+            if !service_uuids_set.contains(&uuid) {
+                return Ok(None);
+            }
+        }
+
+        let mut service_uuids: Vec<String> = service_uuids_set
+            .into_iter()
+            .map(|uuid| uuid.to_string())
+            .collect();
+        service_uuids.sort();
+
         Ok(Some(BleDevice {
             address: address.to_string(),
             name,
             rssi: device.rssi().await.unwrap_or(None),
+            service_uuids,
             connected: device.is_connected().await.unwrap_or(false),
             paired: device.is_paired().await.unwrap_or(false),
             trusted: device.is_trusted().await.unwrap_or(false),

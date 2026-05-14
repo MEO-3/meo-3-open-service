@@ -15,6 +15,7 @@ pub struct BleDevice {
     pub address: String,
     pub name: Option<String>,
     pub rssi: Option<i16>,
+    pub service_uuids: Vec<String>,
     pub connected: bool,
     pub paired: bool,
     pub trusted: bool,
@@ -25,6 +26,7 @@ pub struct BleDevice {
 pub struct ScanStartParams {
     pub timeout_ms: Option<u64>,
     pub name_prefix: Option<String>,
+    pub service_uuid: Option<String>,
 }
 
 impl Default for ScanStartParams {
@@ -32,6 +34,7 @@ impl Default for ScanStartParams {
         Self {
             timeout_ms: Some(8_000),
             name_prefix: None,
+            service_uuid: None,
         }
     }
 }

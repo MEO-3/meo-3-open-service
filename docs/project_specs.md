@@ -39,6 +39,32 @@ Guiding principles:
 - Provide separate advanced views for debugging, custom firmware, MQTT details, and service configuration.
 - Allow the UI philosophy to change as the project learns from real use.
 
+## Device Provisioning Flow
+
+Current provisioning is gateway-led. Students receive a device with firmware already flashed, but without Wi-Fi configured. The gateway uses BLE to configure the device, and Java talks to the Rust BLE service through the generic `blemqtt` MQTT interface.
+
+Child-facing flow:
+
+1. Power on the device.
+2. The gateway searches for nearby setup devices.
+3. The UI shows the matching device in friendly language.
+4. The student or teacher selects a Wi-Fi network.
+5. The gateway sends Wi-Fi information over BLE.
+6. The device joins Wi-Fi and appears as an online MEO device.
+
+Technical flow:
+
+1. Scan for BLE devices advertising the MEO provisioning service UUID.
+2. Optionally filter by setup name prefix.
+3. Connect to the selected BLE address.
+4. Read the device MAC characteristic.
+5. Read the product ID characteristic.
+6. Write Wi-Fi config to the Wi-Fi config characteristic.
+7. Read or subscribe to provisioning status.
+8. Disconnect BLE and wait for the device to appear online through the normal service path.
+
+`blemqtt` should remain project-neutral. It exposes generic BLE commands such as scan, connect, GATT read, GATT write, and disconnect. MEO-specific provisioning rules, UUIDs, device identity, Wi-Fi payloads, and UI progress belong in the Java service and future UI layer.
+
 ## Open Questions
 
 - What is the best first-time setup flow for children and teachers?
