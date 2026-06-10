@@ -2,6 +2,7 @@ package org.thingai.app.meo.define;
 
 public final class BleUuid {
     private BleUuid() {
+
     }
 
     public static final String MEO_DEVICE_PROVISION_SERVICE = "7f5a0000-0f23-4b6a-9f5e-3c2a9f7e0100";
