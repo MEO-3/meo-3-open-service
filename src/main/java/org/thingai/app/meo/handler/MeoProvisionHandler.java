@@ -8,6 +8,7 @@ import org.thingai.app.meo.blemqtt.BlemqttError;
 import org.thingai.app.meo.blemqtt.BlemqttOp;
 import org.thingai.app.meo.blemqtt.BlemqttReply;
 import org.thingai.app.meo.define.BleUuid;
+import org.thingai.app.meo.define.ProvisionStatus;
 import org.thingai.app.meo.entity.MeoDeviceProvision;
 import org.thingai.app.meo.handler.callback.RequestCallback;
 import org.thingai.app.meo.util.JsonUtil;
@@ -41,10 +42,10 @@ public class MeoProvisionHandler {
             return;
         }
 
-        provision.setStatus(MeoDeviceProvision.STATUS_CONNECTING_BLE);
+        provision.setStatus(ProvisionStatus.STATUS_CONNECTING_BLE);
         send(provision, BlemqttCommand.create(BlemqttOp.DEVICE_CONNECT, addressParams(provision)), callback, "connect BLE device",
                 reply -> {
-                    provision.setStatus(MeoDeviceProvision.STATUS_CONNECTED_BLE);
+                    provision.setStatus(ProvisionStatus.STATUS_CONNECTED_BLE);
                     provision.setMessage("BLE device connected");
                     return provision;
                 });
@@ -56,7 +57,7 @@ public class MeoProvisionHandler {
             return;
         }
 
-        provision.setStatus(MeoDeviceProvision.STATUS_READING_MAC);
+        provision.setStatus(ProvisionStatus.STATUS_READING_MAC);
         send(provision, gattRead(provision, BleUuid.MEO_DEVICE_MAC_CHAR), callback, "read device MAC",
                 reply -> {
                     provision.setMacAddress(readReplyValue(reply));
@@ -66,18 +67,18 @@ public class MeoProvisionHandler {
                 });
     }
 
-    public void readProductId(MeoDeviceProvision provision, RequestCallback<MeoDeviceProvision> callback) {
-        ILog.i(TAG, "readProductId", addressLog(provision));
+    public void readProfileId(MeoDeviceProvision provision, RequestCallback<MeoDeviceProvision> callback) {
+        ILog.i(TAG, "readProfileId", addressLog(provision));
         if (!validateAddress(provision, callback)) {
             return;
         }
 
-        provision.setStatus(MeoDeviceProvision.STATUS_READING_PRODUCT_ID);
-        send(provision, gattRead(provision, BleUuid.MEO_DEVICE_PRODUCT_ID_CHAR), callback, "read product ID",
+        provision.setStatus(ProvisionStatus.STATUS_READING_PROFILE_ID);
+        send(provision, gattRead(provision, BleUuid.MEO_DEVICE_PROFILE_ID_CHAR), callback, "read profile ID",
                 reply -> {
-                    provision.setProductId(readReplyValue(reply));
-                    provision.setMessage("product ID read");
-                    ILog.i(TAG, "readProductId", "productId=" + provision.getProductId());
+                    provision.setProfileId(readReplyValue(reply));
+                    provision.setMessage("profile ID read");
+                    ILog.i(TAG, "readProfileId", "profileId=" + provision.getProfileId());
                     return provision;
                 });
     }
@@ -106,7 +107,7 @@ public class MeoProvisionHandler {
         params.addProperty("value", JsonUtil.toJson(wifiConfig));
 
         provision.setWifiSsid(ssid);
-        provision.setStatus(MeoDeviceProvision.STATUS_WRITING_WIFI);
+        provision.setStatus(ProvisionStatus.STATUS_WRITING_WIFI);
         send(provision, BlemqttCommand.create(BlemqttOp.GATT_WRITE, params), callback, "write Wi-Fi config",
                 reply -> {
                     provision.setMessage("Wi-Fi config written");
@@ -121,7 +122,7 @@ public class MeoProvisionHandler {
             return;
         }
 
-        provision.setStatus(MeoDeviceProvision.STATUS_READING_STATUS);
+        provision.setStatus(ProvisionStatus.STATUS_READING_STATUS);
         send(provision, gattRead(provision, BleUuid.MEO_PROVISION_STATUS_CHAR), callback, "read provision status",
                 reply -> {
                     String status = readReplyValue(reply);
@@ -138,10 +139,10 @@ public class MeoProvisionHandler {
             return;
         }
 
-        provision.setStatus(MeoDeviceProvision.STATUS_DISCONNECTING_BLE);
+        provision.setStatus(ProvisionStatus.STATUS_DISCONNECTING_BLE);
         send(provision, BlemqttCommand.create(BlemqttOp.DEVICE_DISCONNECT, addressParams(provision)), callback, "disconnect BLE device",
                 reply -> {
-                    provision.setStatus(MeoDeviceProvision.STATUS_DISCONNECTED_BLE);
+                    provision.setStatus(ProvisionStatus.STATUS_DISCONNECTED_BLE);
                     provision.setMessage("BLE device disconnected");
                     ILog.i(TAG, "disconnect", "BLE device disconnected");
                     return provision;
@@ -229,7 +230,7 @@ public class MeoProvisionHandler {
     ) {
         ILog.e(TAG, "fail", throwable);
         if (provision != null) {
-            provision.setStatus(MeoDeviceProvision.STATUS_FAILED);
+            provision.setStatus(ProvisionStatus.STATUS_FAILED);
             provision.setMessage(message);
         }
         callback.onFailure(throwable, message);
@@ -256,7 +257,7 @@ public class MeoProvisionHandler {
         }
 
         JsonObject object = result.getAsJsonObject();
-        String[] fields = {"value", "macAddress", "mac", "productId", "status", "state", "message"};
+        String[] fields = {"value", "macAddress", "mac", "profileId", "productId", "status", "state", "message"};
         for (String field : fields) {
             JsonElement value = object.get(field);
             if (value != null && !value.isJsonNull()) {

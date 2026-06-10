@@ -1,24 +1,14 @@
 package org.thingai.app.meo.entity;
 
-public class MeoDeviceProvision {
-    public static final String STATUS_CREATED = "CREATED";
-    public static final String STATUS_SCANNING = "SCANNING";
-    public static final String STATUS_CONNECTING_BLE = "CONNECTING_BLE";
-    public static final String STATUS_CONNECTED_BLE = "CONNECTED_BLE";
-    public static final String STATUS_READING_MAC = "READING_MAC";
-    public static final String STATUS_READING_PRODUCT_ID = "READING_PRODUCT_ID";
-    public static final String STATUS_WRITING_WIFI = "WRITING_WIFI";
-    public static final String STATUS_READING_STATUS = "READING_STATUS";
-    public static final String STATUS_DISCONNECTING_BLE = "DISCONNECTING_BLE";
-    public static final String STATUS_DISCONNECTED_BLE = "DISCONNECTED_BLE";
-    public static final String STATUS_FAILED = "FAILED";
+import org.thingai.app.meo.define.ProvisionStatus;
 
+public class MeoDeviceProvision {
     private String bleAddress;
     private String macAddress;
-    private String productId;
+    private String profileId;
     private String wifiSsid;
     private String provisionStatus;
-    private String status = STATUS_CREATED;
+    private int status = ProvisionStatus.STATUS_CREATED;
     private String message;
 
     public String getBleAddress() {
@@ -37,12 +27,12 @@ public class MeoDeviceProvision {
         this.macAddress = macAddress;
     }
 
-    public String getProductId() {
-        return productId;
+    public String getProfileId() {
+        return profileId;
     }
 
-    public void setProductId(String productId) {
-        this.productId = productId;
+    public void setProfileId(String profileId) {
+        this.profileId = profileId;
     }
 
     public String getWifiSsid() {
@@ -61,11 +51,11 @@ public class MeoDeviceProvision {
         this.provisionStatus = provisionStatus;
     }
 
-    public String getStatus() {
+    public int getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(int status) {
         this.status = status;
     }
 
