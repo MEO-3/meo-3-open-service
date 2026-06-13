@@ -205,6 +205,11 @@ const copy = [
         dest: path.join(EDITOR_PUBLIC, "red/meo")
     },
     {
+        cwd: path.join(EDITOR_SRC, "meo"),
+        glob: "**/*.js",
+        dest: path.join(EDITOR_PUBLIC, "red/meo")
+    },
+    {
         cwd: path.join(EDITOR_SRC, "ace/bin"),
         glob: "**",
         dest: path.join(EDITOR_PUBLIC, "vendor/ace")

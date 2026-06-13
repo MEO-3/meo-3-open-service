@@ -115,6 +115,7 @@ async function main() {
     );
     watchPath("sass", path.join(EDITOR_SRC, "sass"), () => sass());
     watchPath("meo-css", path.join(EDITOR_SRC, "css"), () => copy());
+    watchPath("meo-js", path.join(EDITOR_SRC, "meo"), () => copy());
     watchPath(
         "json",
         [
