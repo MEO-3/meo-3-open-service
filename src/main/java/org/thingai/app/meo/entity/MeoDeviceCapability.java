@@ -1,15 +1,48 @@
 package org.thingai.app.meo.entity;
 
+import org.thingai.base.dao.annotations.DaoColumn;
+import org.thingai.base.dao.annotations.DaoTable;
+
+@DaoTable(name = "meo_device_capabilities", version = 1)
 public class MeoDeviceCapability {
+    @DaoColumn(primaryKey = true, nullable = false)
+    private String capabilityKey;
+    @DaoColumn(nullable = false)
+    private String profileId;
+    @DaoColumn
     private int capabilityId;
+    @DaoColumn
     private int permission;
+    @DaoColumn(nullable = false)
     private String name;
+    @DaoColumn
     private String description;
+    @DaoColumn
     private String valueType;
+    @DaoColumn
     private String unit;
+    @DaoColumn
     private String minValue;
+    @DaoColumn
     private String maxValue;
+    @DaoColumn
     private String stepValue;
+
+    public String getCapabilityKey() {
+        return capabilityKey;
+    }
+
+    public void setCapabilityKey(String capabilityKey) {
+        this.capabilityKey = capabilityKey;
+    }
+
+    public String getProfileId() {
+        return profileId;
+    }
+
+    public void setProfileId(String profileId) {
+        this.profileId = profileId;
+    }
 
     public int getCapabilityId() {
         return capabilityId;

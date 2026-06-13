@@ -10,8 +10,16 @@ public class Main {
         MeoService meoService = new MeoService();
         meoService.init();
 
-        var app = Javalin.create(config -> {
-            new Route(config).addRoutes();
-        }).start(7070);
+        Javalin.create(config -> {
+            new Route(config, meoService.getDeviceHandler()).addRoutes();
+        }).start(getPort());
+    }
+
+    private static int getPort() {
+        String port = System.getenv("MEO_SERVICE_PORT");
+        if (port == null || port.trim().isEmpty()) {
+            return 7070;
+        }
+        return Integer.parseInt(port);
     }
 }

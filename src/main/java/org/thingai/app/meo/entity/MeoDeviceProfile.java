@@ -1,12 +1,23 @@
 package org.thingai.app.meo.entity;
 
+import org.thingai.base.dao.annotations.DaoColumn;
+import org.thingai.base.dao.annotations.DaoTable;
+
+@DaoTable(name = "meo_device_profiles", version = 1)
 public class MeoDeviceProfile {
+    @DaoColumn(primaryKey = true, nullable = false)
     private String profileId;
+    @DaoColumn(nullable = false)
     private String name;
+    @DaoColumn
     private String description;
+    @DaoColumn
     private int version;
+    @DaoColumn
     private int provisionTransportType;
+    @DaoColumn
     private int transportType;
+    @DaoColumn
     private int deviceType;
     private MeoDeviceCapability[] capabilities;
 
