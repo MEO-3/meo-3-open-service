@@ -1,11 +1,14 @@
-import org.gradle.internal.impldep.bsh.commands.dir
-
 plugins {
     id("java")
+    id("application")
 }
 
 group = "org.thingai.app"
 version = "1.0-SNAPSHOT"
+
+application {
+    mainClass.set("org.thingai.app.meo.Main")
+}
 
 repositories {
     mavenCentral()
