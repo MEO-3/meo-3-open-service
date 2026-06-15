@@ -11,6 +11,7 @@ public class Main {
         meoService.init();
 
         Javalin.create(config -> {
+            config.bundledPlugins.enableCors(cors -> cors.addRule(it -> it.anyHost()));
             new Route(config, meoService.getDeviceHandler()).addRoutes();
         }).start(getPort());
     }
