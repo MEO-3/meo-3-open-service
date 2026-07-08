@@ -2,37 +2,50 @@
 
 ## Project Structure & Module Organization
 
-This repository contains the MEO 3 open edge service for IoT education hardware. Main service code lives under `src/main/java/org/thingai/app/meo`, with HTTP routes in `api/`, MQTT handling in `handler/mqtt/`, device logic in `handler/device/`, telemetry in `handler/telemetry/`, and LAN discovery in `service/`.
+This repository is the MEO 3 open edge service (the gateway "hub") for IoT education hardware. It is a single Gradle project (`meo-open-service`), not a multi-module build. Service code lives under `src/main/java/org/thingai/app/meo`:
 
-Shared DTOs, entities, constants, callbacks, and abstract handlers live in the separate `meo-common/` Gradle project under `meo-common/src/main/java/org/thingai/meo/common`. Bundled platform dependencies are stored in `libs/`. Developer notes are in `docs/`, and infrastructure setup scripts are at the repo root, such as `install-meo-linux.sh`.
+- `Main.java` / `MeoService.java` — entry point; starts a Javalin HTTP server on `MEO_SERVICE_PORT` (default `7070`).
+- `api/` — Javalin route registration. Keep routes thin and delegate to handlers.
+- `handler/` — device and provisioning business logic (`MeoDeviceHandler`, `MeoProvisionHandler`), with `handler/callback/` for callback interfaces.
+- `blemqtt/` — MQTT client (`BlemqttClient`) that drives the Rust BLE service over the generic `blemqtt` protocol.
+- `transport/{ble,mqtt}/` — transport abstractions.
+- `define/` — UUIDs, enums, and shared constants (`BleUuid`, `MeoCmd`, `ProvisionStatus`, `TransportType`).
+- `entity/` — DTO/entity classes (`MeoDevice`, `MeoDeviceProvision`, ...).
+- `util/` — helpers (`ByteUtil`, `JsonUtil`).
+
+The base framework (`Service`, `Dao`/`DaoSqlite`, `ILog`; packages `org.thingai.base.*` and `org.thingai.platform.*`) is **not in source** — it ships as bundled jars in `libs/` (`applicationbase.jar`, `edgeplatform.jar`, `aibase.jar`). Read the jars or treat them as external API.
+
+The Rust BLE service lives under `rust/meo-3-neo-ble-service` (BlueZ/BLE only; owns the BLE hardware and exposes `blemqtt` over MQTT). Developer notes and authoritative contracts are in `docs/` (`project_specs.md`, `firmware_development_guide.md`). Persistence is SQLite via `DaoSqlite` at `MEO_DATA_DIR/meo.db`. Node-RED is **not** vendored here, and the MQTT broker (Mosquitto) is a system dependency.
 
 ## Build, Test, and Development Commands
 
-The Gradle wrapper files may not be executable in every checkout; use `bash ./gradlew` if `./gradlew` is denied.
+A top-level `Makefile` wraps Gradle and the Rust build. The Gradle wrapper may not be executable in a fresh checkout; use `bash ./gradlew` if `./gradlew` is denied. Use **JDK 17 or 21** — very new JDKs can fail before compilation (including running Gradle itself).
 
-- `bash ./gradlew compileJava`: compile the open service.
-- `bash ./gradlew test`: run service tests when present.
-- `cd meo-common && bash ./gradlew build`: build the shared common module jar.
-- `bash ./gradlew clean`: remove generated build output.
+- `make build` — `gradlew installDist` → `build/install/meo-open-service`.
+- `make compile` — compile only (`gradlew compileJava`).
+- `make test` — run Java tests (JUnit 5; none checked in yet).
+- `make clean` — remove Gradle build output.
+- `make ble-x86` / `make ble-arm` — build the Rust BLE binary (host x86_64 / cross aarch64).
+- `make package` / `make dist` — per-arch release tarballs (`build/dist/meo-open-service-<arch>.tar.gz`); the matching BLE binary must be built first.
 
-Use a supported Java version for Gradle, preferably JDK 17 or 21. Very new JDKs may fail before project compilation.
+Runtime config: environment variables `MEO_SERVICE_PORT` and `MEO_DATA_DIR` (see `config/meo.env`). Run the installDist launcher at `build/install/meo-open-service/bin/meo-open-service`.
 
 ## Coding Style & Naming Conventions
 
-Use Java with 4-space indentation. Keep package names under `org.thingai.app.meo` for service code and `org.thingai.meo.common` for shared contracts. Follow existing class prefixes such as `MDevice`, `MService`, `MMqtt`, and `Meo...`. Public API handlers should remain thin and delegate business logic to handler classes.
+Java with 4-space indentation. Keep package names under `org.thingai.app.meo`. Follow existing class prefixes such as `Meo...` (`MeoService`, `MeoDeviceHandler`) and `Blemqtt...` (`BlemqttClient`, `BlemqttCommand`). API route classes stay thin and delegate business logic to `handler/` classes.
 
-Prefer explicit DTO/entity classes over raw JSON maps for stable service contracts. Keep comments short and useful, especially around hardware protocol details.
+Prefer explicit DTO/entity classes over raw JSON maps for stable service contracts. Keep comments short and useful, especially around hardware/BLE protocol details. Do not add per-product command names to `define/MeoCmd.java` — it is a fixed, generic command catalog kept in sync with the firmware's `Meo3_Cmd.h`.
 
 ## Testing Guidelines
 
-JUnit 5 is configured in both Gradle builds, but no tests are currently checked in. Add tests under `src/test/java` or `meo-common/src/test/java`, mirroring the production package. Name tests with `*Test.java`, for example `MDeviceHandlerTest.java`. Focus coverage on protocol parsing, device registration, MQTT topic handling, and DAO-backed behavior.
+JUnit 5 is configured, but no tests are currently checked in. Add tests under `src/test/java`, mirroring the production package. Name tests `*Test.java`, for example `MeoDeviceHandlerTest.java`. Focus coverage on `blemqtt` command/reply handling, the provisioning flow, protocol parsing, and DAO-backed behavior.
 
 ## Commit & Pull Request Guidelines
 
-Recent history uses Conventional Commit-style messages, for example `feat: add ResponseDeviceInfo class` and `refactor: unify device discovery handler hierarchy`. Keep commits small and scoped.
+History uses Conventional Commit-style messages, for example `feat: add cors rule javalin` and `refactor: drop vendored Node-RED and shell scripts`. Keep commits small and scoped.
 
-Pull requests should include a short purpose statement, implementation notes, test results, and linked issues when relevant. For UI-facing changes, include screenshots or recordings. For hardware or MQTT changes, document topic names, payload examples, and any required Node-RED, Mosquitto, Avahi, or InfluxDB setup.
+Pull requests should include a short purpose statement, implementation notes, test results, and linked issues when relevant. For BLE/MQTT changes, document topic names (`blemqtt/v1/command`, `blemqtt/v1/reply/+`, `blemqtt/v1/event`), payload examples, and any required Node-RED, Mosquitto, or Avahi setup.
 
 ## Security & Configuration Tips
 
-Do not commit local database files, credentials, tokens, or generated device keys. Treat MQTT broker URLs, InfluxDB tokens, Wi-Fi details, and device transmit keys as configuration, not source constants.
+Do not commit local database files, credentials, tokens, or generated device keys. Treat MQTT broker URLs, Wi-Fi details, and device keys as runtime configuration, not source constants.

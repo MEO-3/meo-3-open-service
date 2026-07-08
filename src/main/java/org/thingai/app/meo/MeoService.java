@@ -1,8 +1,6 @@
 package org.thingai.app.meo;
 
 
-import org.thingai.app.meo.entity.MeoDeviceCapability;
-import org.thingai.app.meo.entity.MeoDeviceProfile;
 import org.thingai.app.meo.handler.MeoDeviceHandler;
 import org.thingai.base.Service;
 import org.thingai.base.dao.Dao;
@@ -33,10 +31,7 @@ public class MeoService extends Service {
         new File(appDir).mkdirs();
 
         dao = new DaoSqlite(appDir + "/meo.db");
-        dao.initDao(new Class[]{
-                MeoDeviceProfile.class,
-                MeoDeviceCapability.class
-        });
+        dao.initDao(new Class[]{});
         deviceHandler = new MeoDeviceHandler(dao);
     }
 

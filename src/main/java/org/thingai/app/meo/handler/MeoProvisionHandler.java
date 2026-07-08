@@ -9,6 +9,7 @@ import org.thingai.app.meo.blemqtt.BlemqttOp;
 import org.thingai.app.meo.blemqtt.BlemqttReply;
 import org.thingai.app.meo.define.BleUuid;
 import org.thingai.app.meo.define.ProvisionStatus;
+import org.thingai.app.meo.entity.MeoDevice;
 import org.thingai.app.meo.entity.MeoDeviceProvision;
 import org.thingai.app.meo.handler.callback.RequestCallback;
 import org.thingai.app.meo.util.JsonUtil;
@@ -51,38 +52,14 @@ public class MeoProvisionHandler {
                 });
     }
 
-    public void readDeviceMac(MeoDeviceProvision provision, RequestCallback<MeoDeviceProvision> callback) {
-        ILog.i(TAG, "readDeviceMac", addressLog(provision));
-        if (!validateAddress(provision, callback)) {
-            return;
-        }
+    // Wrapper of read device information, create device info and sync with sqlite
+    public void syncDevice(MeoDeviceProvision provision, RequestCallback<MeoDevice> callback) {
+        ILog.i(TAG, "syncDevice", addressLog(provision));
 
-        provision.setStatus(ProvisionStatus.STATUS_READING_MAC);
-        send(provision, gattRead(provision, BleUuid.MEO_DEVICE_MAC_CHAR), callback, "read device MAC",
-                reply -> {
-                    provision.setMacAddress(readReplyValue(reply));
-                    provision.setMessage("device MAC read");
-                    ILog.i(TAG, "readDeviceMac", "macAddress=" + provision.getMacAddress());
-                    return provision;
-                });
+
     }
 
-    public void readProfileId(MeoDeviceProvision provision, RequestCallback<MeoDeviceProvision> callback) {
-        ILog.i(TAG, "readProfileId", addressLog(provision));
-        if (!validateAddress(provision, callback)) {
-            return;
-        }
-
-        provision.setStatus(ProvisionStatus.STATUS_READING_PROFILE_ID);
-        send(provision, gattRead(provision, BleUuid.MEO_DEVICE_PROFILE_ID_CHAR), callback, "read profile ID",
-                reply -> {
-                    provision.setProfileId(readReplyValue(reply));
-                    provision.setMessage("profile ID read");
-                    ILog.i(TAG, "readProfileId", "profileId=" + provision.getProfileId());
-                    return provision;
-                });
-    }
-
+    // TODO: Update this method to also write mqtt config to device, fallback mqtt with mDNS if not found.
     public void writeWifiConfig(
             MeoDeviceProvision provision,
             String ssid,
@@ -112,6 +89,38 @@ public class MeoProvisionHandler {
                 reply -> {
                     provision.setMessage("Wi-Fi config written");
                     ILog.i(TAG, "writeWifiConfig", "Wi-Fi config written");
+                    return provision;
+                });
+    }
+
+    public void readDeviceMac(MeoDeviceProvision provision, RequestCallback<MeoDeviceProvision> callback) {
+        ILog.i(TAG, "readDeviceMac", addressLog(provision));
+        if (!validateAddress(provision, callback)) {
+            return;
+        }
+
+        provision.setStatus(ProvisionStatus.STATUS_READING_MAC);
+        send(provision, gattRead(provision, BleUuid.MEO_DEVICE_MAC_CHAR), callback, "read device MAC",
+                reply -> {
+                    provision.setMacAddress(readReplyValue(reply));
+                    provision.setMessage("device MAC read");
+                    ILog.i(TAG, "readDeviceMac", "macAddress=" + provision.getMacAddress());
+                    return provision;
+                });
+    }
+
+    public void readProfileId(MeoDeviceProvision provision, RequestCallback<MeoDeviceProvision> callback) {
+        ILog.i(TAG, "readProfileId", addressLog(provision));
+        if (!validateAddress(provision, callback)) {
+            return;
+        }
+
+        provision.setStatus(ProvisionStatus.STATUS_READING_PROFILE_ID);
+        send(provision, gattRead(provision, BleUuid.MEO_DEVICE_PROFILE_ID_CHAR), callback, "read profile ID",
+                reply -> {
+                    provision.setProfileId(readReplyValue(reply));
+                    provision.setMessage("profile ID read");
+                    ILog.i(TAG, "readProfileId", "profileId=" + provision.getProfileId());
                     return provision;
                 });
     }
