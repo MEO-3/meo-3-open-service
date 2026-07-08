@@ -1,5 +1,6 @@
 package org.thingai.app.meo.handler;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -13,7 +14,9 @@ import org.thingai.app.meo.blemqtt.BlemqttReply;
 import org.thingai.app.meo.define.BleUuid;
 import org.thingai.app.meo.define.ProvisionStatus;
 import org.thingai.app.meo.define.TransportType;
+import org.thingai.app.meo.api.dto.MeoDeviceResponse;
 import org.thingai.app.meo.entity.MeoDevice;
+import org.thingai.app.meo.entity.MeoDeviceCapability;
 import org.thingai.app.meo.entity.MeoDeviceProvision;
 import org.thingai.app.meo.handler.callback.RequestCallback;
 import org.thingai.app.meo.util.JsonUtil;
@@ -48,6 +51,11 @@ public class MeoProvisionHandler {
 
     private final BlemqttClient blemqttClient;
     private final Dao dao;
+
+    // Single in-flight provisioning session (buffer). BLE is one device at a
+    // time: connect opens it, setupDevice advances it, persistDevice clears it.
+    // null when idle.
+    private MeoDeviceProvision session;
 
     public MeoProvisionHandler(BlemqttClient blemqttClient, Dao dao) {
         this.blemqttClient = blemqttClient;
@@ -86,92 +94,199 @@ public class MeoProvisionHandler {
         }
     }
 
-    // Full gateway-led provisioning: connect -> read MAC -> subscribe to status
-    // -> write Wi-Fi -> await terminal join state -> disconnect -> persist device.
-    // Callback-based so the body can later become async without changing the
-    // signature; the implementation is single-threaded for now.
-    public void provision(MeoDeviceProvision provision, String ssid, String password, RequestCallback<MeoDevice> callback) {
-        ILog.i(TAG, "provision", addressLog(provision));
-        if (provision == null || isEmpty(provision.getBleAddress())) {
-            callback.onFailure(new IllegalArgumentException("ble address is required"), "provision");
+    // Connect to a scanned device over BLE and read its identity + capabilities.
+    // Opens the provisioning session (one device at a time) and leaves BLE
+    // connected for setupDevice. Any prior unfinished session is reclaimed first,
+    // since BLE is single-device. Callback-based to match scan/setupDevice.
+    public synchronized void connect(String bleAddress, RequestCallback<MeoDeviceProvision> callback) {
+        ILog.i(TAG, "connect", "bleAddress=" + bleAddress);
+        if (isEmpty(bleAddress)) {
+            callback.onFailure(new IllegalArgumentException("ble address is required"), "connect");
+            return;
+        }
+        reset();
+
+        MeoDeviceProvision provision = new MeoDeviceProvision();
+        provision.setBleAddress(bleAddress);
+        try {
+            bleConnect(provision);
+            readMac(provision);
+            readCapabilities(provision);
+            provision.setStatus(ProvisionStatus.STATUS_CONNECTED_BLE);
+            provision.setMessage("device connected");
+            session = provision;
+            callback.onResult(provision, "device connected");
+        } catch (RuntimeException e) {
+            ILog.e(TAG, "connect failed", e);
+            safeDisconnect(provision);
+            callback.onFailure(e, "connect");
+        }
+    }
+
+    // Write Wi-Fi (and future device config) to the connected device and wait for
+    // it to join. Requires an open session from connect(). On success the device
+    // is online, BLE is released, and the session is kept (status = provisioned)
+    // for persistDevice. On failure the session stays open with BLE connected so
+    // the client can retry with corrected credentials.
+    public synchronized void setupDevice(String ssid, String password, RequestCallback<MeoDeviceProvision> callback) {
+        ILog.i(TAG, "setupDevice", addressLog(session));
+        if (session == null) {
+            callback.onFailure(new IllegalStateException("no device connected; call connect first"), "setupDevice");
             return;
         }
         if (isEmpty(ssid)) {
-            callback.onFailure(new IllegalArgumentException("wifi ssid is required"), "provision");
+            callback.onFailure(new IllegalArgumentException("wifi ssid is required"), "setupDevice");
             return;
         }
 
+        MeoDeviceProvision current = session;
         BlockingQueue<Object> terminalState = new LinkedBlockingQueue<>();
-        BlemqttCallback<BlemqttEvent> statusListener = event -> onStatusNotification(provision, event, terminalState);
+        BlemqttCallback<BlemqttEvent> statusListener = event -> onStatusNotification(current, event, terminalState);
         blemqttClient.onEvent(statusListener);
-
-        boolean connected = false;
         try {
-            connect(provision);
-            connected = true;
-            provision.setMacAddress(readMac(provision));
-            subscribeStatus(provision);
-            writeWifi(provision, ssid, password);
-            awaitWifiJoin(provision, terminalState);
-
-            MeoDevice device = persistDevice(provision);
-            provision.setStatus(ProvisionStatus.STATUS_PROVISIONED);
-            provision.setMessage("device provisioned");
-            callback.onResult(device, "device provisioned");
+            subscribeStatus(current);
+            writeWifi(current, ssid, password);
+            awaitWifiJoin(current, terminalState);
+            current.setStatus(ProvisionStatus.STATUS_PROVISIONED);
+            current.setMessage("device provisioned");
+            safeDisconnect(current);
+            callback.onResult(current, "device provisioned");
         } catch (RuntimeException e) {
-            ILog.e(TAG, "provision failed", e);
-            provision.setStatus(ProvisionStatus.STATUS_FAILED);
-            provision.setMessage(e.getMessage());
-            callback.onFailure(e, "provision");
+            ILog.e(TAG, "setupDevice failed", e);
+            current.setStatus(ProvisionStatus.STATUS_FAILED);
+            current.setMessage(e.getMessage());
+            callback.onFailure(e, "setupDevice");
         } finally {
             blemqttClient.removeEventCallback(statusListener);
-            if (connected) {
-                safeDisconnect(provision);
-            }
         }
     }
 
-    // Build a device from the provisioning result and persist it. Callback-based
-    // so the body can later become async without changing the signature.
-    public void syncDevice(MeoDeviceProvision provision, RequestCallback<MeoDevice> callback) {
-        ILog.i(TAG, "syncDevice", addressLog(provision));
+    // Persist the provisioned device (row + capability rows) from the session
+    // buffer and return its view. Requires setupDevice to have completed
+    // (buffered status = provisioned). Clears the session on success.
+    public synchronized void persistDevice(RequestCallback<MeoDeviceResponse> callback) {
+        ILog.i(TAG, "persistDevice", addressLog(session));
+        if (session == null) {
+            callback.onFailure(new IllegalStateException("no device connected; call connect first"), "persistDevice");
+            return;
+        }
+        if (session.getStatus() != ProvisionStatus.STATUS_PROVISIONED) {
+            callback.onFailure(new IllegalStateException("device not set up; call setupDevice first"), "persistDevice");
+            return;
+        }
+
+        MeoDeviceProvision current = session;
         try {
-            callback.onResult(persistDevice(provision), "device synced");
+            MeoDevice device = saveDevice(current);
+            persistCapabilities(device.getDeviceId(), current.getCapabilities());
+            session = null;
+            callback.onResult(MeoDeviceResponse.of(device, current.getCapabilities()), "device persisted");
         } catch (RuntimeException e) {
-            callback.onFailure(e, "sync device");
+            ILog.e(TAG, "persistDevice failed", e);
+            callback.onFailure(e, "persistDevice");
         }
     }
 
-    // The MAC is the stable device identity.
-    private MeoDevice persistDevice(MeoDeviceProvision provision) {
-        if (provision == null || isEmpty(provision.getMacAddress())) {
-            throw new IllegalStateException("device MAC is required to sync device");
+    // Release any in-flight session and its BLE link. BLE is single-device, so a
+    // new connect reclaims a previous, unfinished session.
+    private void reset() {
+        if (session != null) {
+            safeDisconnect(session);
+            session = null;
+        }
+    }
+
+    // Upsert the device row (identity + model/firmware). The MAC is the stable
+    // device identity; capability rows are written separately.
+    private MeoDevice saveDevice(MeoDeviceProvision provision) {
+        if (isEmpty(provision.getMacAddress())) {
+            throw new IllegalStateException("device MAC is required to persist device");
         }
         MeoDevice device = new MeoDevice();
         device.setDeviceId(provision.getMacAddress());
         device.setMacAddress(provision.getMacAddress());
         device.setTransportType(TransportType.WIFI_LAN);
+        device.setModel(provision.getModel());
+        device.setFwVersion(provision.getFwVersion());
 
         dao.insertOrUpdate(device);
-        ILog.i(TAG, "syncDevice", "persisted deviceId=" + device.getDeviceId());
+        ILog.i(TAG, "persistDevice", "persisted deviceId=" + device.getDeviceId());
         return device;
+    }
+
+    // Replace the device's capability rows with the reported set (delete-all
+    // then insert), so re-provisioning refreshes rather than accumulates.
+    private void persistCapabilities(String deviceId, int[] capabilities) {
+        dao.deleteByColumn(MeoDeviceCapability.class, "deviceId", deviceId);
+        if (capabilities == null || capabilities.length == 0) {
+            return;
+        }
+        MeoDeviceCapability[] rows = new MeoDeviceCapability[capabilities.length];
+        for (int i = 0; i < capabilities.length; i++) {
+            MeoDeviceCapability row = new MeoDeviceCapability();
+            row.setDeviceId(deviceId);
+            row.setCapabilityId(capabilities[i]);
+            rows[i] = row;
+        }
+        dao.insertBatch(rows);
+        ILog.i(TAG, "persistCapabilities", "deviceId=" + deviceId, "count=" + capabilities.length);
     }
 
     // --- Steps ----------------------------------------------------------------
 
-    private void connect(MeoDeviceProvision provision) {
+    private void bleConnect(MeoDeviceProvision provision) {
         provision.setStatus(ProvisionStatus.STATUS_CONNECTING_BLE);
         sendBlocking(BlemqttCommand.create(BlemqttOp.DEVICE_CONNECT, addressParams(provision)));
-        provision.setStatus(ProvisionStatus.STATUS_CONNECTED_BLE);
-        provision.setMessage("BLE device connected");
         ILog.i(TAG, "connect", "connected", addressLog(provision));
     }
 
-    private String readMac(MeoDeviceProvision provision) {
+    private void readMac(MeoDeviceProvision provision) {
         provision.setStatus(ProvisionStatus.STATUS_READING_MAC);
         String mac = readReplyValue(sendBlocking(gattRead(provision, BleUuid.MEO_DEVICE_MAC_CHAR)));
+        provision.setMacAddress(mac);
         ILog.i(TAG, "readDeviceMac", "macAddress=" + mac);
-        return mac;
+    }
+
+    // Read the capability report characteristic and record model, firmware
+    // version, and the capability ids on the provision. Non-fatal: a
+    // firmware/read/parse issue leaves the device provisionable with an empty
+    // capability set, since the device is still usable on Wi-Fi and
+    // re-provisioning refreshes it. Ids are kept verbatim (unknown ids are not
+    // filtered) and later persisted one-per-row by persistCapabilities.
+    private void readCapabilities(MeoDeviceProvision provision) {
+        provision.setStatus(ProvisionStatus.STATUS_READING_CAPABILITIES);
+        try {
+            String raw = readReplyValue(sendBlocking(gattRead(provision, BleUuid.MEO_DEVICE_CAPABILITIES_CHAR)));
+            JsonObject report = JsonParser.parseString(raw).getAsJsonObject();
+
+            JsonElement model = report.get("model");
+            if (model != null && !model.isJsonNull()) {
+                provision.setModel(model.getAsString());
+            }
+            JsonElement fw = report.get("fw");
+            if (fw != null && !fw.isJsonNull()) {
+                provision.setFwVersion(fw.getAsString());
+            }
+
+            provision.setCapabilities(parseCapabilities(report.get("capabilities")));
+            ILog.i(TAG, "readCapabilities", "model=" + provision.getModel(),
+                    "fw=" + provision.getFwVersion(), "count=" + provision.getCapabilities().length);
+        } catch (RuntimeException e) {
+            provision.setCapabilities(new int[0]);
+            ILog.w(TAG, "readCapabilities", "failed; continuing with empty capabilities", e.getMessage());
+        }
+    }
+
+    private int[] parseCapabilities(JsonElement element) {
+        if (element == null || !element.isJsonArray()) {
+            return new int[0];
+        }
+        JsonArray array = element.getAsJsonArray();
+        int[] capabilities = new int[array.size()];
+        for (int i = 0; i < array.size(); i++) {
+            capabilities[i] = array.get(i).getAsInt();
+        }
+        return capabilities;
     }
 
     private void subscribeStatus(MeoDeviceProvision provision) {
@@ -213,11 +328,12 @@ public class MeoProvisionHandler {
         }
     }
 
+    // Release the BLE link. Transport cleanup only — it does not touch the
+    // provisioning status, which the buffer must retain (e.g. PROVISIONED) for
+    // persistDevice.
     private void safeDisconnect(MeoDeviceProvision provision) {
         try {
-            provision.setStatus(ProvisionStatus.STATUS_DISCONNECTING_BLE);
             sendBlocking(BlemqttCommand.create(BlemqttOp.DEVICE_DISCONNECT, addressParams(provision)));
-            provision.setStatus(ProvisionStatus.STATUS_DISCONNECTED_BLE);
             ILog.i(TAG, "disconnect", "disconnected", addressLog(provision));
         } catch (RuntimeException e) {
             ILog.w(TAG, "disconnect failed", e);

@@ -5,6 +5,9 @@ import org.thingai.app.meo.define.ProvisionStatus;
 public class MeoDeviceProvision {
     private String bleAddress;
     private String macAddress;
+    private String model;
+    private String fwVersion;
+    private int[] capabilities;
     private String wifiSsid;
     private String provisionStatus;
     private int status = ProvisionStatus.STATUS_CREATED;
@@ -24,6 +27,30 @@ public class MeoDeviceProvision {
 
     public void setMacAddress(String macAddress) {
         this.macAddress = macAddress;
+    }
+
+    public String getModel() {
+        return model;
+    }
+
+    public void setModel(String model) {
+        this.model = model;
+    }
+
+    public String getFwVersion() {
+        return fwVersion;
+    }
+
+    public void setFwVersion(String fwVersion) {
+        this.fwVersion = fwVersion;
+    }
+
+    public int[] getCapabilities() {
+        return capabilities;
+    }
+
+    public void setCapabilities(int[] capabilities) {
+        this.capabilities = capabilities;
     }
 
     public String getWifiSsid() {

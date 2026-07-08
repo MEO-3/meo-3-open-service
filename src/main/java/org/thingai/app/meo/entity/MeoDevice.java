@@ -17,6 +17,12 @@ public class MeoDevice {
     private int deviceType;
     @DaoColumn
     private int transportType;
+    // Device model, reported by firmware during provisioning.
+    @DaoColumn
+    private String model;
+    // Firmware version, reported by firmware during provisioning.
+    @DaoColumn
+    private String fwVersion;
 
     public String getDeviceId() {
         return deviceId;
@@ -64,5 +70,21 @@ public class MeoDevice {
 
     public void setTransportType(int transportType) {
         this.transportType = transportType;
+    }
+
+    public String getModel() {
+        return model;
+    }
+
+    public void setModel(String model) {
+        this.model = model;
+    }
+
+    public String getFwVersion() {
+        return fwVersion;
+    }
+
+    public void setFwVersion(String fwVersion) {
+        this.fwVersion = fwVersion;
     }
 }

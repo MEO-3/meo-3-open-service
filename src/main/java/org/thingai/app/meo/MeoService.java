@@ -4,6 +4,7 @@ package org.thingai.app.meo;
 import org.thingai.app.meo.blemqtt.BlemqttClient;
 import org.thingai.app.meo.blemqtt.BlemqttConfig;
 import org.thingai.app.meo.entity.MeoDevice;
+import org.thingai.app.meo.entity.MeoDeviceCapability;
 import org.thingai.app.meo.handler.MeoDeviceHandler;
 import org.thingai.app.meo.handler.MeoProvisionHandler;
 import org.thingai.base.Service;
@@ -38,7 +39,8 @@ public class MeoService extends Service {
 
         dao = new DaoSqlite(appDir + "/meo.db");
         dao.initDao(new Class[]{
-                MeoDevice.class
+                MeoDevice.class,
+                MeoDeviceCapability.class
         });
         deviceHandler = new MeoDeviceHandler(dao);
 
