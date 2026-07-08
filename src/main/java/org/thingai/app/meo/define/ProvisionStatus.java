@@ -10,10 +10,10 @@ public final class ProvisionStatus {
     public static final int STATUS_CONNECTING_BLE = 3;
     public static final int STATUS_CONNECTED_BLE = 4;
     public static final int STATUS_READING_MAC = 5;
-    public static final int STATUS_READING_PROFILE_ID = 6;
     public static final int STATUS_WRITING_WIFI = 7;
     public static final int STATUS_READING_STATUS = 8;
     public static final int STATUS_DISCONNECTING_BLE = 9;
     public static final int STATUS_DISCONNECTED_BLE = 10;
     public static final int STATUS_FAILED = 11;
+    public static final int STATUS_PROVISIONED = 12;
 }

@@ -12,7 +12,7 @@ public class Main {
 
         Javalin.create(config -> {
             config.bundledPlugins.enableCors(cors -> cors.addRule(it -> it.anyHost()));
-            new Route(config, meoService.getDeviceHandler()).addRoutes();
+            new Route(config, meoService.getDeviceHandler(), meoService.getProvisionHandler()).addRoutes();
         }).start(getPort());
     }
 

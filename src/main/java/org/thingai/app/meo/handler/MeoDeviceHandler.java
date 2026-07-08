@@ -13,6 +13,10 @@ public class MeoDeviceHandler {
     }
 
     public MeoDevice getDevice(String deviceId) {
-        return null;
+        if (deviceId == null || deviceId.trim().isEmpty()) {
+            return null;
+        }
+        MeoDevice[] devices = dao.query(MeoDevice.class, "deviceId", deviceId);
+        return devices != null && devices.length > 0 ? devices[0] : null;
     }
 }

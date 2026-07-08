@@ -5,8 +5,8 @@ public final class TransportType {
 
     }
 
-    private static final int GENERIC = 0;
-    private static final int WIFI_LAN = 1;
-    private static final int BLE = 2;
-    private static final int UART = 3;
+    public static final int GENERIC = 0;
+    public static final int WIFI_LAN = 1;
+    public static final int BLE = 2;
+    public static final int UART = 3;
 }

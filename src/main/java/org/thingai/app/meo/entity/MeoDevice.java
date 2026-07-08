@@ -1,12 +1,21 @@
 package org.thingai.app.meo.entity;
 
+import org.thingai.base.dao.annotations.DaoColumn;
+import org.thingai.base.dao.annotations.DaoTable;
+
+@DaoTable(name = "meo_devices", version = 1)
 public class MeoDevice {
+    @DaoColumn(primaryKey = true, nullable = false)
     private String deviceId;
-    private String profileId;
+    @DaoColumn
     private String name;
+    @DaoColumn
     private String description;
+    @DaoColumn
     private String macAddress;
+    @DaoColumn
     private int deviceType;
+    @DaoColumn
     private int transportType;
 
     public String getDeviceId() {
@@ -15,14 +24,6 @@ public class MeoDevice {
 
     public void setDeviceId(String deviceId) {
         this.deviceId = deviceId;
-    }
-
-    public String getProfileId() {
-        return profileId;
-    }
-
-    public void setProfileId(String profileId) {
-        this.profileId = profileId;
     }
 
     public String getName() {

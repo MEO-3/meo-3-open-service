@@ -1,7 +1,11 @@
 package org.thingai.app.meo;
 
 
+import org.thingai.app.meo.blemqtt.BlemqttClient;
+import org.thingai.app.meo.blemqtt.BlemqttConfig;
+import org.thingai.app.meo.entity.MeoDevice;
 import org.thingai.app.meo.handler.MeoDeviceHandler;
+import org.thingai.app.meo.handler.MeoProvisionHandler;
 import org.thingai.base.Service;
 import org.thingai.base.dao.Dao;
 import org.thingai.base.log.ILog;
@@ -13,7 +17,9 @@ public class MeoService extends Service {
     private static final String TAG = "MeoService";
 
     private Dao dao;
+    private BlemqttClient blemqttClient;
     private MeoDeviceHandler deviceHandler;
+    private MeoProvisionHandler provisionHandler;
 
     protected MeoService() {
         super("MeoService");
@@ -31,12 +37,35 @@ public class MeoService extends Service {
         new File(appDir).mkdirs();
 
         dao = new DaoSqlite(appDir + "/meo.db");
-        dao.initDao(new Class[]{});
+        dao.initDao(new Class[]{
+                MeoDevice.class
+        });
         deviceHandler = new MeoDeviceHandler(dao);
+
+        BlemqttConfig blemqttConfig = new BlemqttConfig();
+        String broker = System.getenv("MEO_MQTT_BROKER");
+        if (broker != null && !broker.trim().isEmpty()) {
+            blemqttConfig.setBrokerUrl(broker);
+        }
+        blemqttClient = new BlemqttClient(blemqttConfig);
+        try {
+            blemqttClient.connect();
+        } catch (Exception e) {
+            // Provisioning is optional at boot; the HTTP API still starts.
+            ILog.e(TAG, "blemqtt connect failed", e);
+        }
+        provisionHandler = new MeoProvisionHandler(blemqttClient, dao);
     }
 
     @Override
     protected void onServiceShutdown() {
+        if (blemqttClient != null) {
+            try {
+                blemqttClient.disconnect();
+            } catch (Exception e) {
+                ILog.w(TAG, "blemqtt disconnect failed", e);
+            }
+        }
         if (dao instanceof DaoSqlite) {
             ((DaoSqlite) dao).close();
         }
@@ -44,5 +73,9 @@ public class MeoService extends Service {
 
     public MeoDeviceHandler getDeviceHandler() {
         return deviceHandler;
+    }
+
+    public MeoProvisionHandler getProvisionHandler() {
+        return provisionHandler;
     }
 }
