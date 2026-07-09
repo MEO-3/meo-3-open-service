@@ -9,17 +9,17 @@ import org.thingai.base.dao.annotations.DaoTable;
 @DaoTable(name = "meo_device_capabilities", version = 1)
 public class MeoDeviceCapability {
     @DaoColumn(primaryKey = true, autoIncrement = true)
-    private long id;
+    private int id;
     @DaoColumn(nullable = false)
     private String deviceId;
     @DaoColumn(nullable = false)
     private int capabilityId;
 
-    public long getId() {
+    public int getId() {
         return id;
     }
 
-    public void setId(long id) {
+    public void setId(int id) {
         this.id = id;
     }
 
