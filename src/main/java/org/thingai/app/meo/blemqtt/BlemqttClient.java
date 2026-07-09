@@ -13,11 +13,9 @@ import org.eclipse.paho.mqttv5.common.packet.MqttProperties;
 import org.thingai.base.log.ILog;
 
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -28,7 +26,10 @@ public class BlemqttClient {
     private final BlemqttConfig config;
     private final Gson gson = new Gson();
     private final Map<String, CompletableFuture<BlemqttReply>> pendingReplies = new ConcurrentHashMap<>();
-    private final List<BlemqttCallback<BlemqttEvent>> eventCallbacks = new CopyOnWriteArrayList<>();
+    // Single event consumer. Provisioning ops are serialized by the handler
+    // (all synchronized), so at most one listener is active at a time; volatile
+    // because it is set/cleared on request threads and read on the MQTT thread.
+    private volatile BlemqttCallback<BlemqttEvent> eventCallback;
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
     private MqttClient client;
@@ -123,11 +124,11 @@ public class BlemqttClient {
     }
 
     public void onEvent(BlemqttCallback<BlemqttEvent> callback) {
-        eventCallbacks.add(callback);
+        this.eventCallback = callback;
     }
 
-    public void removeEventCallback(BlemqttCallback<BlemqttEvent> callback) {
-        eventCallbacks.remove(callback);
+    public void removeEventCallback() {
+        this.eventCallback = null;
     }
 
     private void handleMessage(String topic, MqttMessage message) {
@@ -137,7 +138,7 @@ public class BlemqttClient {
             BlemqttReply reply = gson.fromJson(payload, BlemqttReply.class);
             CompletableFuture<BlemqttReply> pending = pendingReplies.remove(reply.getRequestId());
             if (pending != null) {
-                ILog.d(TAG, "reply", reply.getRequestId(), "ok=" + reply.isOk());
+                ILog.d(TAG, "reply", reply.getRequestId(), "ok=" + reply.isOk(), payload);
                 pending.complete(reply);
             }
             return;
@@ -146,7 +147,8 @@ public class BlemqttClient {
         if (BlemqttTopics.EVENT.equals(topic)) {
             BlemqttEvent event = gson.fromJson(payload, BlemqttEvent.class);
             ILog.d(TAG, "event", event.getEventType());
-            for (BlemqttCallback<BlemqttEvent> callback : eventCallbacks) {
+            BlemqttCallback<BlemqttEvent> callback = eventCallback;
+            if (callback != null) {
                 callback.handle(event);
             }
         }

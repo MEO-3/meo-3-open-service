@@ -19,4 +19,8 @@ public class MeoDeviceHandler {
         MeoDevice[] devices = dao.query(MeoDevice.class, "deviceId", deviceId);
         return devices != null && devices.length > 0 ? devices[0] : null;
     }
+
+    // TODO: MeoDevice[] getDevices
+    // TODO: MeoDevice updateDevice(String deviceId, MeoDevice device);
+    // TODO: MeoDevice deleteDevice(String deviceId)
 }

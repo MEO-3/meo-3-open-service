@@ -52,10 +52,11 @@ public class MeoService extends Service {
         blemqttClient = new BlemqttClient(blemqttConfig);
         try {
             blemqttClient.connect();
+            ILog.d(TAG, "blemqtt connect");
         } catch (Exception e) {
-            // Provisioning is optional at boot; the HTTP API still starts.
             ILog.e(TAG, "blemqtt connect failed", e);
         }
+        // TODO: Error handling blemqtt connect failed here
         provisionHandler = new MeoProvisionHandler(blemqttClient, dao);
     }
 
