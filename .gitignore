@@ -44,3 +44,6 @@
 
 # Ignore environment configuration files
 .env
+
+# Local runtime database (MEO_DATA_DIR)
+data/*.db
