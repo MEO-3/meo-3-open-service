@@ -19,7 +19,7 @@ public class Main {
                     .withDefinitionConfiguration((version, definition) -> definition
                             .info(info -> info.title("MEO Open Service API").version("v1")))));
             config.registerPlugin(new SwaggerPlugin(ui -> ui.withDocumentationPath("/openapi.json")));
-            new Route(config, meoService.getDeviceHandler(), meoService.getProvisionHandler()).addRoutes();
+            new Route(config, meoService.deviceHandler(), meoService.provisionHandler()).addRoutes();
         }).start(getPort());
     }
 

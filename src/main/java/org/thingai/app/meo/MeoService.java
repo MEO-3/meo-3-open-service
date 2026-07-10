@@ -74,11 +74,11 @@ public class MeoService extends Service {
         }
     }
 
-    public MeoDeviceHandler getDeviceHandler() {
+    public MeoDeviceHandler deviceHandler() {
         return deviceHandler;
     }
 
-    public MeoProvisionHandler getProvisionHandler() {
+    public MeoProvisionHandler provisionHandler() {
         return provisionHandler;
     }
 }
