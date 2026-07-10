@@ -1,4 +1,4 @@
-# MEO 3 Project Specs
+# MEO 3 Project Specs (Depricated)
 
 > This document is a living project note. The information here may become deprecated as the hardware, software, service architecture, and learning experience evolve.
 

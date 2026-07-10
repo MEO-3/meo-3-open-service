@@ -1,4 +1,4 @@
-# Note for developers
+# Note for developers (Depricated)
 
 ## MEO Acronyms and philosophy
 

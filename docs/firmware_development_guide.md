@@ -1,4 +1,4 @@
-# Firmware Development Guide
+# Firmware Development Guide (Depricated)
 
 > This guide describes the current MEO BLE provisioning contract. It may change as the hardware, firmware, and service architecture evolve.
 
