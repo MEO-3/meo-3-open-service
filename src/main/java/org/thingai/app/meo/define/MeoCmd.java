@@ -11,6 +11,9 @@ public final class MeoCmd {
     public static final int CMD_EXECUTE_WITH_VAR = 0x0005;
     public static final int CMD_STOP = 0x0006;
 
+    public static final int EVENT_GENERIC = 0xE000;
+    public static final int EVENT_BUTTON = 0xE001;
+
     public static final int READ_GENERIC = 0xF000;
     public static final int READ_TEMP = 0xF001;
     public static final int READ_HUMID = 0xF002;
