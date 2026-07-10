@@ -38,7 +38,7 @@ Required characteristics:
 | Purpose | UUID | Access |
 | --- | --- | --- |
 | Device MAC | `7f5a0001-0f23-4b6a-9f5e-3c2a9f7e0100` | Read |
-| Wi-Fi config | `7f5a0002-0f23-4b6a-9f5e-3c2a9f7e0100` | Write |
+| Network config | `7f5a0002-0f23-4b6a-9f5e-3c2a9f7e0100` | Write |
 | Provision status | `7f5a0003-0f23-4b6a-9f5e-3c2a9f7e0100` | Read, Notify |
 | Device capabilities | `7f5a0004-0f23-4b6a-9f5e-3c2a9f7e0100` | Read |
 
@@ -54,14 +54,25 @@ Device MAC read result:
 AA:BB:CC:DD:EE:FF
 ```
 
-Wi-Fi config write payload:
+Network config write payload:
 
 ```json
 {
   "ssid": "Classroom WiFi",
-  "password": "secret"
+  "password": "secret",
+  "brokerHost": "192.168.1.10",
+  "brokerPort": 1883
 }
 ```
+
+Field rules:
+
+- `ssid` — required.
+- `password` — optional (open networks).
+- `brokerHost` — required. The gateway's LAN IPv4 address, filled in by the gateway itself
+  (auto-detected, never user input). A config without it must be rejected with a `failed` status
+  and message `broker host is required`, the same treatment as a missing SSID.
+- `brokerPort` — optional, defaults to `1883`.
 
 Provision status read or notify payload:
 
@@ -89,8 +100,8 @@ The Java service calls `blemqtt` commands through MQTT. The firmware only sees n
 3. Gateway reads the device MAC.
 4. Gateway reads the device capabilities characteristic and records the capability set for this device.
 5. Gateway subscribes to the provision status characteristic.
-6. Gateway writes the Wi-Fi config.
-7. Firmware stores the credentials and attempts to join Wi-Fi, notifying `received` -> `connecting` -> `connected`/`failed`.
+6. Gateway writes the network config (Wi-Fi credentials plus its own broker address).
+7. Firmware stores the credentials and broker info, then attempts to join Wi-Fi, notifying `received` -> `connecting` -> `connected`/`failed`.
 8. Gateway waits for a terminal status notification, then disconnects.
 9. Firmware switches to normal online mode after a successful Wi-Fi connection.
 
@@ -99,6 +110,14 @@ The Java service calls `blemqtt` commands through MQTT. The firmware only sees n
 - The BLE address is only a temporary transport address.
 - The MAC address is the stable device identity. The gateway records a provisioned device by its MAC.
 - Provisioning does not carry a per-product profile. A device does not register a product type with the gateway; it only reports the generic capability set it supports (see Capability Reporting).
+
+## Broker Address
+
+The MQTT broker runs on the gateway, and the broker host is always the gateway's LAN IPv4 address. The gateway detects its own address and writes it in the network config payload — devices never discover the broker themselves (no mDNS), and users never enter it.
+
+The device captures the broker address at provision time and persists it alongside the Wi-Fi credentials. If the gateway's IP address changes, provisioned devices are stranded and must be re-provisioned — give the gateway a DHCP reservation or static IP.
+
+After a successful Wi-Fi join, firmware uses the stored host and port to connect to the broker and enter normal online messaging — see `mqtt_messaging.md` for that contract.
 
 ## Device Capabilities
 

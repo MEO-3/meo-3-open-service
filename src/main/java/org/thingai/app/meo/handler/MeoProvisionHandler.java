@@ -21,6 +21,7 @@ import org.thingai.app.meo.entity.MeoDeviceProvision;
 import org.thingai.app.meo.callback.ProvisionEventListener;
 import org.thingai.app.meo.callback.RequestCallback;
 import org.thingai.app.meo.util.JsonUtil;
+import org.thingai.app.meo.util.NetUtil;
 import org.thingai.base.dao.Dao;
 import org.thingai.base.log.ILog;
 
@@ -51,6 +52,10 @@ public class MeoProvisionHandler {
     // How long to wait for the device to report a terminal Wi-Fi join state after
     // credentials are written.
     private static final long WIFI_JOIN_TIMEOUT_MS = 45_000;
+
+    // MQTT port devices use to reach the gateway broker (Mosquitto default).
+    // The broker host is the gateway's own LAN IPv4, resolved per setup call.
+    private static final int DEVICE_BROKER_PORT = 1883;
 
     private final BlemqttClient blemqttClient;
     private final Dao dao;
@@ -154,10 +159,11 @@ public class MeoProvisionHandler {
         }
     }
 
-    // Write Wi-Fi (and future device config) to the connected device and wait for
-    // it to join. Requires an open session from connect(). On success the device
-    // is online, BLE is released, and the session is kept (status = provisioned)
-    // for persistDevice. On failure the session stays open with BLE connected so
+    // Write the network config (Wi-Fi credentials + the gateway's broker
+    // address) to the connected device and wait for it to join. Requires an
+    // open session from connect(). On success the device is online, BLE is
+    // released, and the session is kept (status = provisioned) for
+    // persistDevice. On failure the session stays open with BLE connected so
     // the client can retry with corrected credentials.
     public synchronized void setupDevice(String ssid, String password, RequestCallback<MeoDeviceProvision> callback) {
         ILog.i(TAG, "setupDevice", addressLog(session));
@@ -169,13 +175,18 @@ public class MeoProvisionHandler {
             callback.onFailure(ErrorCode.PROV_SETUP_FAILED, "wifi ssid is required");
             return;
         }
+        String brokerHost = NetUtil.lanIpv4();
+        if (isEmpty(brokerHost)) {
+            callback.onFailure(ErrorCode.PROV_SETUP_FAILED, "cannot determine gateway LAN IPv4");
+            return;
+        }
 
         MeoDeviceProvision current = session;
         BlockingQueue<Object> terminalState = new LinkedBlockingQueue<>();
         blemqttClient.onEvent(event -> onStatusNotification(current, event, terminalState));
         try {
             subscribeStatus(current);
-            writeWifi(current, ssid, password);
+            writeNetworkConfig(current, ssid, password, brokerHost);
             awaitWifiJoin(current, terminalState);
             updateStatus(current, ProvisionStatus.STATUS_PROVISIONED, "device provisioned");
             safeDisconnect(current);
@@ -346,20 +357,23 @@ public class MeoProvisionHandler {
         ILog.i(TAG, "subscribeStatus", "subscribed", addressLog(provision));
     }
 
-    private void writeWifi(MeoDeviceProvision provision, String ssid, String password) {
-        JsonObject wifiConfig = new JsonObject();
-        wifiConfig.addProperty("ssid", ssid);
-        wifiConfig.addProperty("password", password != null ? password : "");
+    private void writeNetworkConfig(MeoDeviceProvision provision, String ssid, String password, String brokerHost) {
+        JsonObject networkConfig = new JsonObject();
+        networkConfig.addProperty("ssid", ssid);
+        networkConfig.addProperty("password", password != null ? password : "");
+        networkConfig.addProperty("brokerHost", brokerHost);
+        networkConfig.addProperty("brokerPort", DEVICE_BROKER_PORT);
 
-        JsonObject params = gattParams(provision, BleUuid.MEO_WIFI_CONFIG_CHAR);
+        JsonObject params = gattParams(provision, BleUuid.MEO_NETWORK_CONFIG_CHAR);
         params.addProperty("encoding", DEFAULT_ENCODING);
-        params.addProperty("value", JsonUtil.toJson(wifiConfig));
+        params.addProperty("value", JsonUtil.toJson(networkConfig));
 
         provision.setWifiSsid(ssid);
         updateStatus(provision, ProvisionStatus.STATUS_WRITING_WIFI, null);
         sendBlocking(BlemqttCommand.create(BlemqttOp.GATT_WRITE, params));
-        updateStatus(provision, ProvisionStatus.STATUS_WRITING_WIFI, "Wi-Fi config written");
-        ILog.i(TAG, "writeWifiConfig", "written", "ssid=" + ssid);
+        updateStatus(provision, ProvisionStatus.STATUS_WRITING_WIFI, "network config written");
+        ILog.i(TAG, "writeNetworkConfig", "written", "ssid=" + ssid,
+                "broker=" + brokerHost + ":" + DEVICE_BROKER_PORT);
     }
 
     // Block until the device reports a terminal Wi-Fi state or the timeout hits.
