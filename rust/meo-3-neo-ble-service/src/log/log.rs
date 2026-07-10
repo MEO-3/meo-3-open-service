@@ -19,6 +19,7 @@ impl LogLevel {
     }
 }
 
+#[derive(Clone)]
 pub struct Log {
     enabled: bool,
     level: LogLevel,

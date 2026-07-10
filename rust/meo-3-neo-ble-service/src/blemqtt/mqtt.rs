@@ -3,6 +3,7 @@ use std::time::Duration;
 use rumqttc::v5::mqttbytes::{QoS, v5::Publish};
 use rumqttc::v5::{AsyncClient, Event, EventLoop, Incoming};
 use serde_json::json;
+use tokio::sync::mpsc::UnboundedReceiver;
 
 use crate::blemqtt::codec::{decode_command, encode_event, encode_reply};
 use crate::blemqtt::event::BleMqttEvent;
@@ -35,6 +36,8 @@ pub struct BleMqttBridge {
     event_loop: EventLoop,
     config: BleMqttConfig,
     service: BleMqttService,
+    // Async events (e.g. GATT notifications) produced outside command handling.
+    events: UnboundedReceiver<BleMqttEvent>,
     log: Log,
 }
 
@@ -44,6 +47,7 @@ impl BleMqttBridge {
         event_loop: EventLoop,
         config: BleMqttConfig,
         service: BleMqttService,
+        events: UnboundedReceiver<BleMqttEvent>,
         log: Log,
     ) -> Self {
         Self {
@@ -51,32 +55,52 @@ impl BleMqttBridge {
             event_loop,
             config,
             service,
+            events,
             log,
         }
     }
 
     pub async fn run(mut self) -> MqttResult<()> {
-        self.client
-            .subscribe(COMMAND_TOPIC, self.config.qos)
-            .await?;
         self.log.info(
             "blemqtt",
             &format!("listening on {} via {}", COMMAND_TOPIC, self.broker_label()),
         );
 
         loop {
-            match self.event_loop.poll().await {
-                Ok(Event::Incoming(Incoming::Publish(message))) => {
-                    self.handle_publish(message).await?;
-                }
-                Ok(_) => {}
-                Err(error) => {
-                    self.log
-                        .warning("blemqtt", &format!("MQTT event loop error: {error}"));
-                    tokio::time::sleep(Duration::from_secs(1)).await;
-                }
+            tokio::select! {
+                polled = self.event_loop.poll() => match polled {
+                    // (Re)subscribe on every (re)connect — rumqttc does not
+                    // restore subscriptions after an automatic reconnect.
+                    Ok(Event::Incoming(Incoming::ConnAck(_))) => {
+                        self.client
+                            .subscribe(COMMAND_TOPIC, self.config.qos)
+                            .await?;
+                    }
+                    Ok(Event::Incoming(Incoming::Publish(message))) => {
+                        self.handle_publish(message).await?;
+                    }
+                    Ok(_) => {}
+                    Err(error) => {
+                        self.log
+                            .warning("blemqtt", &format!("MQTT event loop error: {error}"));
+                        tokio::time::sleep(Duration::from_secs(1)).await;
+                    }
+                },
+                // A None (all senders dropped) is unreachable in practice: the
+                // service we own holds the BleManager and with it a sender.
+                event = self.events.recv() => if let Some(event) = event {
+                    self.publish_event(&event).await?;
+                },
             }
         }
+    }
+
+    async fn publish_event(&self, event: &BleMqttEvent) -> MqttResult<()> {
+        let payload = encode_event(event)?;
+        self.client
+            .publish(EVENT_TOPIC, self.config.qos, false, payload)
+            .await?;
+        Ok(())
     }
 
     async fn handle_publish(&self, message: Publish) -> MqttResult<()> {

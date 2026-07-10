@@ -1,22 +1,44 @@
-use std::collections::{BTreeMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
+use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
-use bluer::{Adapter, AdapterEvent, Address, DiscoveryFilter, DiscoveryTransport, Session, Uuid};
+use bluer::gatt::remote::Characteristic;
+use bluer::{
+    Adapter, AdapterEvent, Address, Device, DiscoveryFilter, DiscoveryTransport, Session, Uuid,
+};
 use futures_util::StreamExt;
+use tokio::sync::mpsc::UnboundedSender;
+use tokio::task::JoinHandle;
 
-use crate::ble::device::{AdapterStatus, BleDevice, ScanStartParams};
+use crate::ble::device::{
+    AdapterStatus, BleDevice, DeviceParams, GattParams, GattValue, GattWriteParams, ScanStartParams,
+    decode_value, encode_value,
+};
 use crate::ble::error::BleResult;
+use crate::blemqtt::event::BleMqttEvent;
 use crate::log::Log;
 
 const TAG: &str = "ble";
+const CONNECT_ATTEMPTS: u32 = 3;
+const SERVICES_RESOLVED_TIMEOUT: Duration = Duration::from_secs(10);
+const SERVICES_RESOLVED_POLL: Duration = Duration::from_millis(100);
 
 pub struct BleManager {
     log: Log,
+    // Async events (GATT notifications) flow out through this channel; the MQTT
+    // bridge publishes them to blemqtt/v1/event.
+    events: UnboundedSender<BleMqttEvent>,
+    // Live notify-forwarder tasks keyed by (address, characteristicUuid).
+    subscriptions: Mutex<HashMap<(String, String), JoinHandle<()>>>,
 }
 
 impl BleManager {
-    pub fn new(log: Log) -> Self {
-        Self { log }
+    pub fn new(log: Log, events: UnboundedSender<BleMqttEvent>) -> Self {
+        Self {
+            log,
+            events,
+            subscriptions: Mutex::new(HashMap::new()),
+        }
     }
 
     pub async fn adapter_status(&self) -> BleResult<AdapterStatus> {
@@ -40,8 +62,7 @@ impl BleManager {
     }
 
     pub async fn adapter_power(&self, enabled: bool) -> BleResult<AdapterStatus> {
-        let session = Session::new().await?;
-        let adapter = session.default_adapter().await?;
+        let adapter = self.adapter().await?;
         self.log.info(
             TAG,
             &format!("setting adapter {} powered={enabled}", adapter.name()),
@@ -57,8 +78,7 @@ impl BleManager {
             Some(value) if !value.is_empty() => Some(value.parse::<Uuid>()?),
             _ => None,
         };
-        let session = Session::new().await?;
-        let adapter = session.default_adapter().await?;
+        let adapter = self.adapter().await?;
 
         if !adapter.is_powered().await? {
             self.log.info(TAG, "powering adapter before scan");
@@ -114,8 +134,7 @@ impl BleManager {
     }
 
     pub async fn device_list(&self) -> BleResult<Vec<BleDevice>> {
-        let session = Session::new().await?;
-        let adapter = session.default_adapter().await?;
+        let adapter = self.adapter().await?;
         let addresses = adapter.device_addresses().await?;
         let mut devices = Vec::with_capacity(addresses.len());
 
@@ -128,6 +147,270 @@ impl BleManager {
         self.log
             .debug(TAG, &format!("device list count={}", devices.len()));
         Ok(devices)
+    }
+
+    pub async fn device_connect(&self, params: DeviceParams) -> BleResult<BleDevice> {
+        let adapter = self.adapter().await?;
+        let device = self.device(&adapter, &params.address)?;
+
+        if device.is_connected().await? {
+            self.log
+                .debug(TAG, &format!("already connected address={}", params.address));
+        } else {
+            self.connect_with_retry(&device, &params.address).await?;
+        }
+
+        self.await_services_resolved(&device, &params.address)
+            .await?;
+
+        let address = params.address.parse::<Address>()?;
+        match self.read_device(&adapter, address, None, None).await? {
+            Some(ble_device) => Ok(ble_device),
+            None => Err(format!("device not found after connect: {}", params.address).into()),
+        }
+    }
+
+    pub async fn device_disconnect(&self, params: DeviceParams) -> BleResult<()> {
+        self.drop_subscriptions(&params.address);
+
+        let adapter = self.adapter().await?;
+        let device = self.device(&adapter, &params.address)?;
+        if device.is_connected().await? {
+            device.disconnect().await?;
+        }
+        self.log
+            .info(TAG, &format!("disconnected address={}", params.address));
+        Ok(())
+    }
+
+    pub async fn gatt_read(&self, params: GattParams) -> BleResult<GattValue> {
+        let adapter = self.adapter().await?;
+        let device = self.device(&adapter, &params.address)?;
+        let characteristic = self
+            .find_characteristic(&device, &params.service_uuid, &params.characteristic_uuid)
+            .await?;
+
+        let bytes = characteristic.read().await?;
+        let (encoding, value) = encode_value(&bytes, params.encoding.as_deref())?;
+        self.log.debug(
+            TAG,
+            &format!(
+                "gatt read address={} characteristic={} bytes={}",
+                params.address,
+                params.characteristic_uuid,
+                bytes.len()
+            ),
+        );
+        Ok(GattValue {
+            address: params.address,
+            service_uuid: params.service_uuid,
+            characteristic_uuid: params.characteristic_uuid,
+            encoding,
+            value,
+        })
+    }
+
+    pub async fn gatt_write(&self, params: GattWriteParams) -> BleResult<()> {
+        let adapter = self.adapter().await?;
+        let device = self.device(&adapter, &params.address)?;
+        let characteristic = self
+            .find_characteristic(&device, &params.service_uuid, &params.characteristic_uuid)
+            .await?;
+
+        let bytes = decode_value(&params.value, params.encoding.as_deref())?;
+        characteristic.write(&bytes).await?;
+        self.log.debug(
+            TAG,
+            &format!(
+                "gatt write address={} characteristic={} bytes={}",
+                params.address,
+                params.characteristic_uuid,
+                bytes.len()
+            ),
+        );
+        Ok(())
+    }
+
+    pub async fn gatt_subscribe(&self, params: GattParams) -> BleResult<()> {
+        let adapter = self.adapter().await?;
+        let device = self.device(&adapter, &params.address)?;
+        let characteristic = self
+            .find_characteristic(&device, &params.service_uuid, &params.characteristic_uuid)
+            .await?;
+
+        let mut stream = Box::pin(characteristic.notify().await?);
+        let events = self.events.clone();
+        let log = self.log.clone();
+        let address = params.address.clone();
+        let service_uuid = params.service_uuid.clone();
+        let characteristic_uuid = params.characteristic_uuid.clone();
+        let encoding = params.encoding.clone();
+
+        // The task owns the characteristic (and with it the session), keeping
+        // the notify stream alive until the device disconnects, the stream
+        // ends, or an unsubscribe/disconnect aborts it.
+        let handle = tokio::spawn(async move {
+            let _characteristic = characteristic;
+            while let Some(bytes) = stream.next().await {
+                let (encoding, value) = match encode_value(&bytes, encoding.as_deref()) {
+                    Ok(encoded) => encoded,
+                    Err(error) => {
+                        log.warning(TAG, &format!("notification encode failed: {error}"));
+                        continue;
+                    }
+                };
+                let payload = GattValue {
+                    address: address.clone(),
+                    service_uuid: service_uuid.clone(),
+                    characteristic_uuid: characteristic_uuid.clone(),
+                    encoding,
+                    value,
+                };
+                let event = BleMqttEvent::new(
+                    "gatt.notification",
+                    serde_json::to_value(&payload).unwrap_or_default(),
+                );
+                if events.send(event).is_err() {
+                    break;
+                }
+            }
+            log.debug(
+                TAG,
+                &format!("notify stream ended address={address} characteristic={characteristic_uuid}"),
+            );
+        });
+
+        let key = (params.address.clone(), params.characteristic_uuid.clone());
+        if let Some(previous) = self
+            .subscriptions
+            .lock()
+            .expect("subscriptions lock poisoned")
+            .insert(key, handle)
+        {
+            previous.abort();
+        }
+
+        self.log.info(
+            TAG,
+            &format!(
+                "subscribed address={} characteristic={}",
+                params.address, params.characteristic_uuid
+            ),
+        );
+        Ok(())
+    }
+
+    pub async fn gatt_unsubscribe(&self, params: GattParams) -> BleResult<()> {
+        let key = (params.address.clone(), params.characteristic_uuid.clone());
+        let removed = self
+            .subscriptions
+            .lock()
+            .expect("subscriptions lock poisoned")
+            .remove(&key);
+        match removed {
+            Some(handle) => {
+                handle.abort();
+                self.log.info(
+                    TAG,
+                    &format!(
+                        "unsubscribed address={} characteristic={}",
+                        params.address, params.characteristic_uuid
+                    ),
+                );
+                Ok(())
+            }
+            None => Err(format!(
+                "no subscription for address={} characteristic={}",
+                params.address, params.characteristic_uuid
+            )
+            .into()),
+        }
+    }
+
+    async fn adapter(&self) -> BleResult<Adapter> {
+        let session = Session::new().await?;
+        Ok(session.default_adapter().await?)
+    }
+
+    fn device(&self, adapter: &Adapter, address: &str) -> BleResult<Device> {
+        let address = address.parse::<Address>()?;
+        Ok(adapter.device(address)?)
+    }
+
+    // BlueZ LE connects abort spuriously (le-connection-abort-by-local); a few
+    // attempts is the standard workaround.
+    async fn connect_with_retry(&self, device: &Device, address: &str) -> BleResult<()> {
+        let mut last_error: Option<Box<dyn std::error::Error + Send + Sync>> = None;
+        for attempt in 1..=CONNECT_ATTEMPTS {
+            self.log.info(
+                TAG,
+                &format!("connecting address={address} attempt={attempt}/{CONNECT_ATTEMPTS}"),
+            );
+            match device.connect().await {
+                Ok(()) => return Ok(()),
+                Err(error) => {
+                    self.log.warning(
+                        TAG,
+                        &format!("connect attempt {attempt} failed address={address}: {error}"),
+                    );
+                    last_error = Some(error.into());
+                }
+            }
+        }
+        Err(last_error.unwrap_or_else(|| format!("connect failed: {address}").into()))
+    }
+
+    // The first gatt.read must not race BlueZ service discovery.
+    async fn await_services_resolved(&self, device: &Device, address: &str) -> BleResult<()> {
+        let deadline = Instant::now() + SERVICES_RESOLVED_TIMEOUT;
+        while Instant::now() < deadline {
+            if device.is_services_resolved().await? {
+                return Ok(());
+            }
+            tokio::time::sleep(SERVICES_RESOLVED_POLL).await;
+        }
+        Err(format!("services not resolved in time: {address}").into())
+    }
+
+    async fn find_characteristic(
+        &self,
+        device: &Device,
+        service_uuid: &str,
+        characteristic_uuid: &str,
+    ) -> BleResult<Characteristic> {
+        let service_uuid = service_uuid.parse::<Uuid>()?;
+        let characteristic_uuid = characteristic_uuid.parse::<Uuid>()?;
+
+        for service in device.services().await? {
+            if service.uuid().await? != service_uuid {
+                continue;
+            }
+            for characteristic in service.characteristics().await? {
+                if characteristic.uuid().await? == characteristic_uuid {
+                    return Ok(characteristic);
+                }
+            }
+            return Err(format!(
+                "characteristic {characteristic_uuid} not found in service {service_uuid}"
+            )
+            .into());
+        }
+        Err(format!("service {service_uuid} not found on device").into())
+    }
+
+    fn drop_subscriptions(&self, address: &str) {
+        let mut subscriptions = self
+            .subscriptions
+            .lock()
+            .expect("subscriptions lock poisoned");
+        subscriptions.retain(|(subscribed_address, _), handle| {
+            if subscribed_address == address {
+                handle.abort();
+                false
+            } else {
+                true
+            }
+        });
     }
 
     async fn default_adapter_if_available(&self, session: &Session) -> BleResult<Option<Adapter>> {

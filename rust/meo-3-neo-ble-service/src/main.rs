@@ -21,7 +21,10 @@ async fn main() -> AppResult<()> {
     );
     mqtt_options.set_keep_alive(Duration::from_secs(30));
     let (mqtt_client, event_loop) = AsyncClient::new(mqtt_options, 25);
-    let ble_manager = BleManager::new(log::Log::default());
+    // GATT notifications flow from the BLE manager to the bridge, which
+    // publishes them on blemqtt/v1/event.
+    let (event_tx, event_rx) = tokio::sync::mpsc::unbounded_channel();
+    let ble_manager = BleManager::new(log::Log::default(), event_tx);
     let blemqtt_service = blemqtt::BleMqttService::new(ble_manager, log::Log::default());
 
     let bridge: blemqtt::BleMqttBridge = blemqtt::BleMqttBridge::new(
@@ -29,6 +32,7 @@ async fn main() -> AppResult<()> {
         event_loop,
         config,
         blemqtt_service,
+        event_rx,
         log::Log::default(),
     );
     bridge.run().await

@@ -71,6 +71,9 @@ public class BlemqttClient {
             @Override
             public void connectComplete(boolean reconnect, String serverURI) {
                 ILog.i(TAG, "connectComplete", "reconnect=" + reconnect, serverURI);
+                // cleanStart drops subscriptions on every reconnect, so they
+                // must be re-established here or replies stop arriving.
+                subscribeTopics();
             }
 
             @Override
@@ -83,9 +86,17 @@ public class BlemqttClient {
         options.setCleanStart(true);
 
         client.connect(options);
-        client.subscribe(BlemqttTopics.REPLY_WILDCARD, config.getQos());
-        client.subscribe(BlemqttTopics.EVENT, config.getQos());
-        ILog.i(TAG, "subscribed", BlemqttTopics.REPLY_WILDCARD, BlemqttTopics.EVENT);
+    }
+
+    // Called from connectComplete (initial connect and every reconnect).
+    private void subscribeTopics() {
+        try {
+            client.subscribe(BlemqttTopics.REPLY_WILDCARD, config.getQos());
+            client.subscribe(BlemqttTopics.EVENT, config.getQos());
+            ILog.i(TAG, "subscribed", BlemqttTopics.REPLY_WILDCARD, BlemqttTopics.EVENT);
+        } catch (MqttException e) {
+            ILog.e(TAG, "subscribe failed", e);
+        }
     }
 
     public synchronized void disconnect() throws MqttException {
