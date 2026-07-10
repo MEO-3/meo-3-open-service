@@ -1,6 +1,7 @@
 package org.thingai.app.meo.api;
 
 import io.javalin.config.JavalinConfig;
+import org.thingai.app.meo.api.controller.DeviceController;
 import org.thingai.app.meo.api.controller.ProvisionController;
 import org.thingai.app.meo.handler.MeoDeviceHandler;
 import org.thingai.app.meo.handler.MeoProvisionHandler;
@@ -21,6 +22,7 @@ public class Route {
     public void addRoutes() {
         config.routes.get("/", ctx -> ctx.json("meow"));
 
+        new DeviceController(deviceHandler).addRoutes(config);
         new ProvisionController(provisionHandler).addRoutes(config);
     }
 }

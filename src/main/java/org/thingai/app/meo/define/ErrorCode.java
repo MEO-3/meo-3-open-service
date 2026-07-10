@@ -10,4 +10,8 @@ public final class ErrorCode {
     public static int PROV_CONNECT_FAILED = 102;
     public static int PROV_SETUP_FAILED = 103;
     public static int PROV_PRESIST_FAILED = 104;
+
+    // Device management
+    public static int DEVICE_NOT_FOUND = 200;
+    public static int DEVICE_UPDATE_FAILED = 201;
 }
