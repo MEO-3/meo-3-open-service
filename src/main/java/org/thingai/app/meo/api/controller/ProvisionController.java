@@ -120,8 +120,6 @@ public class ProvisionController implements ProvisionEventListener {
     )
     private void scan(Context ctx) {
         int timeoutMs = parseTimeout(ctx.queryParam("timeoutMs"));
-        // The handler blocks and invokes the callback on this request thread, so
-        // writing the response from the callback is safe with synchronous Javalin.
         provisionHandler.scan(timeoutMs, ctx.queryParam("namePrefix"), new RequestCallback<JsonObject[]>() {
             @Override
             public void onResult(JsonObject[] devices, String message) {
