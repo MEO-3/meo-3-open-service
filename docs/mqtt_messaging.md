@@ -45,12 +45,17 @@ The gateway subscribes with wildcards:
 
 ```text
 meo/v1/device/+/reply
-meo/v1/device/+/event
+meo/v1/device/+/event    (not consumed yet — see below)
 ```
 
-There is no retained state topic. The gateway is the source of truth for device state: it keeps a
-last-value cache per `(deviceId, capabilityId)` fed by replies and events, and refreshes on demand
-by sending a READ command.
+There is no retained state topic. The gateway reads device state on demand by sending a READ
+command and returning the reply's value.
+
+**The event topic has no consumer yet.** Devices may publish readings and `MEO_EVENT_*`
+occurrences, and the topic is part of this contract, but nothing on the gateway subscribes to it,
+so those messages are currently discarded. Until that changes, edge-triggered events such as
+`MEO_EVENT_BUTTON` cannot be observed — they have no READ equivalent to poll for. A last-value
+cache is likewise deferred; every read costs a device round trip.
 
 ## Payloads
 
@@ -171,8 +176,8 @@ Gateway (Java service):
 
 - Publishes commands and awaits replies (`requestId` → future, with timeout), mirroring the
   `BlemqttClient` pattern.
-- Subscribes to `reply` and `event` wildcards, maintains the last-value state cache per
-  `(deviceId, capabilityId)`, and exposes control and state over the HTTP API.
+- Subscribes to the `reply` wildcard and exposes device control over the HTTP API. The `event`
+  wildcard has no consumer yet.
 
 Firmware (`meo-3-arduino`):
 
