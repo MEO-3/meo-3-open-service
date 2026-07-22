@@ -28,4 +28,19 @@ public final class MeoCmd {
     public static final int WRITE_BUZZER = 0xFF03;
     public static final int WRITE_MOTOR = 0xFF04;
     public static final int WRITE_SERVO = 0xFF05;
+
+    // The id encodes the action — there is no verb field — so these decide what
+    // may be commanded and how a reply's value bytes are read.
+
+    public static boolean isEvent(int cap) {
+        return cap >= EVENT_GENERIC && cap < READ_GENERIC;
+    }
+
+    public static boolean isRead(int cap) {
+        return cap >= READ_GENERIC && cap < WRITE_GENERIC;
+    }
+
+    public static boolean isWrite(int cap) {
+        return cap >= WRITE_GENERIC;
+    }
 }

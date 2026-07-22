@@ -1,10 +1,14 @@
 package org.thingai.app.meo;
 
 
+import org.eclipse.paho.mqttv5.client.MqttClient;
+import org.eclipse.paho.mqttv5.client.MqttConnectionOptions;
+import org.eclipse.paho.mqttv5.client.persist.MemoryPersistence;
 import org.thingai.app.meo.blemqtt.BlemqttClient;
 import org.thingai.app.meo.blemqtt.BlemqttConfig;
 import org.thingai.app.meo.entity.MeoDevice;
 import org.thingai.app.meo.entity.MeoDeviceCapability;
+import org.thingai.app.meo.handler.MeoControlHandler;
 import org.thingai.app.meo.handler.MeoDeviceHandler;
 import org.thingai.app.meo.handler.MeoProvisionHandler;
 import org.thingai.base.Service;
@@ -17,10 +21,16 @@ import java.io.File;
 public class MeoService extends Service {
     private static final String TAG = "MeoService";
 
+    // Only has to outlive a reconnect (Paho backs off to 128s); the client id is
+    // per-run, so a restart never resumes the old session.
+    private static final long MQTT_SESSION_EXPIRY_SECONDS = 300;
+
     private Dao dao;
     private BlemqttClient blemqttClient;
+    private MqttClient deviceMqttClient;
     private MeoDeviceHandler deviceHandler;
     private MeoProvisionHandler provisionHandler;
+    private MeoControlHandler controlHandler;
 
     protected MeoService() {
         super("MeoService");
@@ -58,6 +68,23 @@ public class MeoService extends Service {
         }
         // TODO: Error handling blemqtt connect failed here
         provisionHandler = new MeoProvisionHandler(blemqttClient, dao);
+
+        // Own connection to the same broker — a separate protocol from blemqtt.
+        try {
+            deviceMqttClient = new MqttClient(blemqttConfig.getBrokerUrl(),
+                    "meo-" + System.currentTimeMillis(), new MemoryPersistence());
+            MqttConnectionOptions options = new MqttConnectionOptions();
+            options.setAutomaticReconnect(true);
+            options.setCleanStart(false); // disable this so topics don't have to re-subscribe.
+            options.setSessionExpiryInterval(MQTT_SESSION_EXPIRY_SECONDS);
+            deviceMqttClient.connect(options);
+
+            controlHandler = new MeoControlHandler(deviceMqttClient, deviceHandler);
+            controlHandler.start();
+            ILog.i(TAG, "device mqtt connected", blemqttConfig.getBrokerUrl());
+        } catch (Exception e) {
+            ILog.e(TAG, "device mqtt connect failed", e);
+        }
     }
 
     @Override
@@ -67,6 +94,13 @@ public class MeoService extends Service {
                 blemqttClient.disconnect();
             } catch (Exception e) {
                 ILog.w(TAG, "blemqtt disconnect failed", e);
+            }
+        }
+        if (deviceMqttClient != null) {
+            try {
+                deviceMqttClient.disconnect();
+            } catch (Exception e) {
+                ILog.w(TAG, "device mqtt disconnect failed", e);
             }
         }
         if (dao instanceof DaoSqlite) {
@@ -80,5 +114,9 @@ public class MeoService extends Service {
 
     public MeoProvisionHandler provisionHandler() {
         return provisionHandler;
+    }
+
+    public MeoControlHandler controlHandler() {
+        return controlHandler;
     }
 }
