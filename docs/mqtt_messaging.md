@@ -23,8 +23,9 @@ Out of scope for this version (deliberately deferred, not forgotten):
 - `deviceId` — the device's stable identity, its Wi-Fi MAC as recorded at provisioning time.
   In topics it is normalized to lowercase hex without separators (e.g. `AA:BB:CC:DD:EE:FF` →
   `aabbccddeeff`).
-- `requestId` — a gateway-generated string correlating one command with its reply. Opaque to the
-  device; it must be echoed back verbatim.
+- `requestId` — a gateway-generated `uint16` correlating one command with its reply. Opaque to the
+  device; it must be echoed back verbatim. It is a wrapping counter, not a unique ID — the gateway's
+  reply timeout keeps the correlation window short enough that reuse is safe.
 
 ## Topics
 
@@ -52,91 +53,99 @@ by sending a READ command.
 
 ## Payloads
 
-All payloads are UTF-8 JSON, flat, one message per publish. Field order is not significant.
-Unknown fields must be ignored, not treated as errors.
+All payloads are **fixed-size binary frames**, little-endian, one message per publish — no JSON,
+no length prefixes, no framing. Firmware parses them as plain byte offsets (no JSON library
+needed for this contract); the gateway mirrors that with a fixed `ByteBuffer` layout
+(`ByteOrder.LITTLE_ENDIAN`).
 
 Capability IDs (`cap`) come from the shared command catalog — `MeoCmd.java` on the gateway,
-`Meo3_Cmd.h` in firmware — and are carried verbatim as decimal integers in JSON.
+`Meo3_Cmd.h` in firmware — and are carried as a raw `uint16`.
 
-### Command (gateway → device)
+A message whose length does not match its topic's fixed frame size is malformed and must be
+dropped with no reply — the frame is too short to trust any field, including `requestId`.
 
-| Field | Type | Required | Meaning |
-| --- | --- | --- | --- |
-| `requestId` | string | yes | Correlation ID, echoed in the reply |
-| `cap` | int | yes | Capability to invoke, from the shared catalog |
-| `value` | int | for writes | Single scalar value; meaning is defined by the capability |
+### Command (gateway → device) — 8 bytes
+
+| Offset | Size | Field | Type | Meaning |
+| --- | --- | --- | --- | --- |
+| 0 | 2 | `requestId` | `uint16` LE | Correlation ID, echoed in the reply |
+| 2 | 2 | `cap` | `uint16` LE | Capability to invoke, from the shared catalog |
+| 4 | 4 | `value` | `int32` LE | Scalar value for `MEO_WRITE_*`; `0` and ignored otherwise |
 
 There is no separate verb field — the capability ID itself encodes the action:
 
-- `MEO_READ_*` capabilities read a value; the reply carries it.
+- `MEO_READ_*` capabilities read a value; the reply carries it. `value` is ignored.
 - `MEO_WRITE_*` capabilities write `value` to an actuator.
 - `MEO_CMD_*` capabilities are generic device commands (e.g. STOP). Every MEO firmware supports
-  them implicitly; they are not declared during provisioning.
+  them implicitly; they are not declared during provisioning. `value` is ignored.
 
-Examples:
+Example — `requestId=42`, `cap=65281` (`MEO_WRITE_LED`), `value=1`:
 
-```json
-{ "requestId": "c-42", "cap": 65281, "value": 1 }
-```
+| Offset 0-1 | Offset 2-3 | Offset 4-7 |
+| --- | --- | --- |
+| `0x002A` | `0xFF01` | `0x00000001` |
 
-```json
-{ "requestId": "c-43", "cap": 61441 }
-```
+`value` is always a **single 32-bit integer**. Multi-parameter actuators pack their parameters
+into it with the encoding documented in the capability catalog (e.g. `MEO_WRITE_LED_RGB` takes
+`0xRRGGBB`, which fits in the low 24 bits). Per-capability parameter schemas are intentionally
+avoided.
 
-```json
-{ "requestId": "c-44", "cap": 6 }
-```
-
-(`65281` = `MEO_WRITE_LED`, `61441` = `MEO_READ_TEMP`, `6` = `MEO_CMD_STOP`.)
-
-`value` is always a **single number**. Multi-parameter actuators pack their parameters into one
-integer with the encoding documented in the capability catalog (e.g. `MEO_WRITE_LED_RGB` takes
-`0xRRGGBB`). Per-capability parameter schemas are intentionally avoided.
-
-### Reply (device → gateway)
+### Reply (device → gateway) — 10 bytes
 
 The device must publish exactly one reply per received command, echoing the `requestId`.
 
-| Field | Type | Required | Meaning |
-| --- | --- | --- | --- |
-| `requestId` | string | yes | Echoed from the command |
-| `ok` | bool | yes | Whether the command was accepted and executed |
-| `cap` | int | on success | Echoed target capability |
-| `value` | number | for READ, and WRITE with a resulting state | Resulting or read value |
-| `error` | int | on failure | Numeric error code (see `MeoCmdErrCode.java`: 1 = bad request, 2 = unknown capability, 3 = handle failed) |
+| Offset | Size | Field | Type | Meaning |
+| --- | --- | --- | --- | --- |
+| 0 | 2 | `requestId` | `uint16` LE | Echoed from the command |
+| 2 | 1 | `ok` | `uint8` (0/1) | Whether the command was accepted and executed |
+| 3 | 2 | `cap` | `uint16` LE | Echoed target capability; `0` on failure |
+| 5 | 4 | `value` | `int32` LE or `float32` LE | See below; `0` on failure |
+| 9 | 1 | `error` | `uint8` | See `MeoCmdErrCode.java`: 1 = bad request, 2 = unknown capability, 3 = handle failed; `0` when `ok=1` |
 
-Examples:
+`value`'s encoding on success depends on which table matched the command's `cap`:
 
-```json
-{ "requestId": "c-42", "ok": true, "cap": 65281, "value": 1 }
-```
+- `MEO_WRITE_*` → `int32` LE, the value that was written.
+- `MEO_READ_*` → `float32` LE, the value that was read.
 
-```json
-{ "requestId": "c-43", "ok": true, "cap": 61441, "value": 23.5 }
-```
+Example — success, write, `requestId=42`, `cap=65281`, `value=1`:
 
-```json
-{ "requestId": "c-45", "ok": false, "error": 2 }
-```
+| Offset 0-1 | Offset 2 | Offset 3-4 | Offset 5-8 | Offset 9 |
+| --- | --- | --- | --- | --- |
+| `0x002A` | `1` | `0xFF01` | `0x00000001` (int32) | `0` |
+
+Example — success, read, `requestId=43`, `cap=61441`, `value=23.5`:
+
+| Offset 0-1 | Offset 2 | Offset 3-4 | Offset 5-8 | Offset 9 |
+| --- | --- | --- | --- | --- |
+| `0x002B` | `1` | `0xF001` | `23.5` (float32) | `0` |
+
+Example — failure, `requestId=45`, unknown capability:
+
+| Offset 0-1 | Offset 2 | Offset 3-4 | Offset 5-8 | Offset 9 |
+| --- | --- | --- | --- | --- |
+| `0x002D` | `0` | `0x0000` | `0x00000000` | `2` |
 
 A command targeting a capability the device did not declare at provisioning must be answered with
-`ok: false` and an error code — never silently dropped.
+`ok=0` and an error code — never silently dropped.
 
-### Event (device → gateway)
+### Event (device → gateway) — 6 bytes
 
 Unsolicited messages from the device: periodic sensor readings and edge-triggered occurrences
 (e.g. a button press).
 
-| Field | Type | Required | Meaning |
-| --- | --- | --- | --- |
-| `cap` | int | yes | Capability the value belongs to |
-| `value` | number | yes | Reading or event value |
+| Offset | Size | Field | Type | Meaning |
+| --- | --- | --- | --- | --- |
+| 0 | 2 | `cap` | `uint16` LE | Capability the value belongs to |
+| 2 | 4 | `value` | `float32` LE | Reading or event value |
 
-Example:
+Event `value` is always `float32` — events only ever carry `MEO_READ_*` readings or `MEO_EVENT_*`
+occurrences, never a `MEO_WRITE_*` result, so there is no int/float ambiguity to resolve per-cap.
 
-```json
-{ "cap": 61441, "value": 23.5 }
-```
+Example — `cap=61441` (`MEO_READ_TEMP`), `value=23.5`:
+
+| Offset 0-1 | Offset 2-5 |
+| --- | --- |
+| `0xF001` | `23.5` (float32) |
 
 Events carry **no timestamp** — devices have no reliable clock. The gateway stamps arrival time
 when it records the value.
@@ -151,8 +160,9 @@ when it records the value.
   should treat command handling as effectively idempotent where possible.
 - A reply with an unknown `requestId` (e.g. arriving after timeout) is logged and dropped by the
   gateway.
-- Devices must answer malformed or incomplete commands with `ok: false` and an error code when a
-  `requestId` is recoverable, or drop the message when it is not.
+- A command frame that isn't exactly 8 bytes is dropped with no reply — `requestId` can't be
+  trusted. A well-formed frame with `cap=0` gets `ok=0` / `error=1` (bad request), since
+  `requestId` is recoverable in that case.
 
 ## Responsibilities
 
