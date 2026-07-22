@@ -20,9 +20,10 @@ Out of scope for this version (deliberately deferred, not forgotten):
 
 ## Identities
 
-- `deviceId` — the device's stable identity, its Wi-Fi MAC as recorded at provisioning time.
-  In topics it is normalized to lowercase hex without separators (e.g. `AA:BB:CC:DD:EE:FF` →
-  `aabbccddeeff`).
+- `deviceId` — the device's stable identity, its Wi-Fi MAC as recorded at provisioning time,
+  normalized to lowercase hex without separators (e.g. `AA:BB:CC:DD:EE:FF` → `aabbccddeeff`).
+  The gateway stores it in this form, so it drops straight into a topic with no conversion; the
+  device row's `macAddress` keeps the readable colon form for display.
 - `requestId` — a gateway-generated `uint16` correlating one command with its reply. Opaque to the
   device; it must be echoed back verbatim. It is a wrapping counter, not a unique ID — the gateway's
   reply timeout keeps the correlation window short enough that reuse is safe.

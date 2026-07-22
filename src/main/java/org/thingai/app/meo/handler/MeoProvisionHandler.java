@@ -237,14 +237,15 @@ public class MeoProvisionHandler {
         }
     }
 
-    // Upsert the device row (identity + model/firmware). The MAC is the stable
-    // device identity; capability rows are written separately.
+    // Upsert the device row (identity + model/firmware). deviceId is the
+    // topic-ready MAC, macAddress the readable one; capability rows are
+    // written separately.
     private MeoDevice saveDevice(MeoDeviceProvision provision) {
         if (isEmpty(provision.getMacAddress())) {
             throw new IllegalStateException("device MAC is required to persist device");
         }
         MeoDevice device = new MeoDevice();
-        device.setDeviceId(provision.getMacAddress());
+        device.setDeviceId(normalizeDeviceId(provision.getMacAddress()));
         device.setMacAddress(provision.getMacAddress());
         device.setTransportType(TransportType.WIFI_LAN);
         device.setModel(provision.getModel());
@@ -532,6 +533,11 @@ public class MeoProvisionHandler {
             }
         }
         return object.toString();
+    }
+
+    // AA:BB:CC:DD:EE:FF -> aabbccddeeff, the form firmware uses in MQTT topics.
+    private static String normalizeDeviceId(String macAddress) {
+        return macAddress.replace(":", "").toLowerCase();
     }
 
     private String failureMessage(Throwable t, String fallback) {
