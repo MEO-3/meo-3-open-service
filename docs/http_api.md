@@ -25,6 +25,10 @@ MEO application code (see `define/ErrorCode.java`), independent of the HTTP stat
 | 100–104 | Provisioning: generic / scan / connect / setup / persist failed |
 | 200 | Device not found |
 | 201 | Device update failed |
+| 300 | Control failed (bad request, or messaging unavailable) |
+| 301 | Capability not supported by the device |
+| 302 | Device did not reply in time |
+| 303 | Device rejected or failed to run the command |
 
 ## Health
 
@@ -143,3 +147,99 @@ late or reconnecting clients see where the flow stands.
 `MeoDeviceProvision.status` values (see `define/ProvisionStatus.java`): 0 generic, 1 created,
 2 scanning, 3 connecting BLE, 4 connected, 5 reading MAC, 6 reading capabilities, 7 writing Wi-Fi,
 8 reading status, 9 disconnecting, 10 disconnected, 11 **failed**, 12 **provisioned**.
+
+## Control
+
+One endpoint drives every device. There is **no verb**: the capability id encodes the action, so the
+same call reads a sensor, writes an actuator, or runs a generic command depending on which id you
+send (see `define/MeoCmd.java`).
+
+The gateway publishes an MQTT command frame to the device and blocks for its reply
+(see `docs/mqtt_messaging.md`) — clients never touch MQTT, and the gateway owns request
+correlation and the timeout.
+
+### `POST /api/v1/devices/{deviceId}/command`
+
+```json
+{ "cap": 65281, "value": 1 }
+```
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `cap` | int | Capability id, `0`–`65535`. JSON has no hex literal, so send it in **decimal** |
+| `value` | int | Only read for WRITE capabilities; ignored by reads and generic commands |
+
+Returns `MeoCommandResponse` — the value the device reported back, with `deviceId` and `cap` echoed
+so a caller firing several commands can tell the replies apart:
+
+```json
+{ "deviceId": "AA:BB:CC:DD:EE:FF", "cap": 65281, "value": 1.0 }
+```
+
+`value` is decoded per capability kind: READ replies carry **float32** (`61441` → `23.5` °C),
+everything else **int32**.
+
+Reading a temperature sensor:
+
+```bash
+curl -X POST http://<gateway>:7070/api/v1/devices/AA:BB:CC:DD:EE:FF/command \
+  -H 'Content-Type: application/json' -d '{ "cap": 61441 }'
+```
+
+The call blocks until the device replies, up to **10 seconds**.
+
+#### Capability ids
+
+Values are the authoritative list in `define/MeoCmd.java`; the labels are what a child sees in the
+Node-RED palette (`lib/meo-caps.js`) and the firmware's `Meo3_Cmd.h` carries the same numbers. The id
+range decides the kind — that is why there is no verb field.
+
+| Range | Kind | Reply value | `value` used |
+| --- | --- | --- | --- |
+| `0x0001`–`0x0006` | Generic command | int32 | only by `0x0005` |
+| `0xE000`–`0xEFFF` | Event | — | **not commandable** (device → gateway only) |
+| `0xF000`–`0xFEFF` | Read | float32 | no |
+| `0xFF00`–`0xFFFF` | Write | int32 | yes |
+
+| Hex | Decimal | Label |
+| --- | --- | --- |
+| `0x0001` | 1 | Generic command |
+| `0x0002` | 2 | Write |
+| `0x0003` | 3 | Read |
+| `0x0004` | 4 | Run |
+| `0x0005` | 5 | Run with value |
+| `0x0006` | 6 | Stop |
+| `0xE000` | 57344 | Generic event |
+| `0xE001` | 57345 | Button |
+| `0xF000` | 61440 | Generic reading |
+| `0xF001` | 61441 | Temperature |
+| `0xF002` | 61442 | Humidity |
+| `0xF003` | 61443 | Pressure |
+| `0xF004` | 61444 | CO2 |
+| `0xF005` | 61445 | Fine dust (PM2.5) |
+| `0xF006` | 61446 | Distance |
+| `0xFF00` | 65280 | Generic output |
+| `0xFF01` | 65281 | Built-in LED |
+| `0xFF02` | 65282 | RGB LED |
+| `0xFF03` | 65283 | Buzzer |
+| `0xFF04` | 65284 | Motor |
+| `0xFF05` | 65285 | Servo |
+
+A device's own `capabilities` array (`GET /api/v1/devices/{deviceId}`) lists what it implements — but
+the device is the final authority: an unimplemented id is rejected by the firmware, not by the gateway.
+
+#### Status codes
+
+| Status | `errorCode` | When |
+| --- | --- | --- |
+| `200` | — | Device replied; body is `MeoCommandResponse` |
+| `400` | 300 | Missing body, `cap` out of range, or an event id (`0xE000`–`0xEFFF`) |
+| `400` | 301 | Device does not implement the capability |
+| `404` | 200 | Unknown device |
+| `502` | 303 | Device rejected the command or failed to execute it |
+| `503` | 300 | Device messaging is not connected (MQTT unavailable at startup) |
+| `504` | 302 | Device did not reply within 10 s |
+
+The device-side reason behind `502` comes from the firmware's error code (`define/MeoCmdErrCode.java`):
+1 malformed request, 2 unknown capability, 3 handler failed. Code 2 is surfaced as `400`/301 rather
+than `502`, since the caller — not the device — has to fix it.
