@@ -30,11 +30,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-// Gateway-led BLE provisioning. Each method runs synchronously: it blocks on the
-// blemqtt command reply (`send(...).get()`) and reads as straight-line code.
-// The one exception is the Wi-Fi join status, which arrives as gatt.notification
-// events on the MQTT callback thread; setupDevice waits on those with a
-// blocking poll, not async composition.
+// Gateway-led BLE provisioning. Methods block on blemqtt replies, except
+// setupDevice, which polls for the async gatt.notification Wi-Fi join event.
 public class MeoProvisionHandler {
     private static final String TAG = "MeoProvisionHandler";
     private static final String DEFAULT_ENCODING = "utf8";
@@ -49,25 +46,19 @@ public class MeoProvisionHandler {
     public static final String EVENT_SCAN_COMPLETED = "scan.completed";
     public static final String EVENT_DEVICE_PERSISTED = "device.persisted";
 
-    // How long to wait for the device to report a terminal Wi-Fi join state after
-    // credentials are written.
+    // Max wait for a terminal Wi-Fi join state after credentials are written.
     private static final long WIFI_JOIN_TIMEOUT_MS = 45_000;
 
-    // MQTT port devices use to reach the gateway broker (Mosquitto default).
-    // The broker host is the gateway's own LAN IPv4, resolved per setup call.
+    // Mosquitto default port; broker host is the gateway's LAN IPv4, resolved per call.
     private static final int DEVICE_BROKER_PORT = 1883;
 
     private final BlemqttClient blemqttClient;
     private final Dao dao;
 
-    // Single in-flight provisioning session (buffer). BLE is one device at a
-    // time: connect opens it, setupDevice advances it, persistDevice clears it.
-    // null when idle.
+    // Single in-flight session; BLE is one device at a time. Null when idle.
     private MeoDeviceProvision session;
 
-    // Optional progress observer (the SSE endpoint). Emits are fire-and-forget
-    // and never affect the provisioning flow; may be invoked from request
-    // threads and the MQTT callback thread.
+    // Optional SSE observer; emits are fire-and-forget, called from request or MQTT threads.
     private volatile ProvisionEventListener eventListener;
 
     public MeoProvisionHandler(BlemqttClient blemqttClient, Dao dao) {
@@ -84,13 +75,8 @@ public class MeoProvisionHandler {
         return session;
     }
 
-    // Scan for MEO provisionable devices. The BLE service runs the whole
-    // discovery window itself and returns the devices found in the scan.start
-    // reply (`result.devices`), so this blocks on the reply for ~timeoutMs — no
-    // events are involved. timeoutMs must stay below the blemqtt request
-    // timeout (15s default) or the reply future times out first. Synchronized
-    // like the session steps: BLE is one radio, and serializing every op lets
-    // the blemqtt client hold a single event callback.
+    // Blocks on scan.start's reply for ~timeoutMs; keep timeoutMs under the blemqtt
+    // 15s reply timeout. Synchronized like the other steps — BLE is one radio.
     public synchronized void scan(int timeoutMs, String namePrefix, RequestCallback<JsonObject[]> callback) {
         ILog.i(TAG, "scan", "timeoutMs=" + timeoutMs, "namePrefix=" + namePrefix);
 
@@ -130,10 +116,8 @@ public class MeoProvisionHandler {
         return parsed != null ? parsed : new JsonObject[0];
     }
 
-    // Connect to a scanned device over BLE and read its identity + capabilities.
-    // Opens the provisioning session (one device at a time) and leaves BLE
-    // connected for setupDevice. Any prior unfinished session is reclaimed first,
-    // since BLE is single-device. Callback-based to match scan/setupDevice.
+    // Connects, reads identity/capabilities, and opens the session for setupDevice.
+    // Reclaims any prior unfinished session first, since BLE is single-device.
     public synchronized void connect(String bleAddress, RequestCallback<MeoDeviceProvision> callback) {
         ILog.i(TAG, "connect", "bleAddress=" + bleAddress);
         if (isEmpty(bleAddress)) {
@@ -159,12 +143,8 @@ public class MeoProvisionHandler {
         }
     }
 
-    // Write the network config (Wi-Fi credentials + the gateway's broker
-    // address) to the connected device and wait for it to join. Requires an
-    // open session from connect(). On success the device is online, BLE is
-    // released, and the session is kept (status = provisioned) for
-    // persistDevice. On failure the session stays open with BLE connected so
-    // the client can retry with corrected credentials.
+    // Writes Wi-Fi + broker config and waits for the device to join. Requires an
+    // open session from connect(). On failure BLE stays connected so the client can retry.
     public synchronized void setupDevice(String ssid, String password, RequestCallback<MeoDeviceProvision> callback) {
         ILog.i(TAG, "setupDevice", addressLog(session));
         if (session == null) {
@@ -200,9 +180,8 @@ public class MeoProvisionHandler {
         }
     }
 
-    // Persist the provisioned device (row + capability rows) from the session
-    // buffer and return its view. Requires setupDevice to have completed
-    // (buffered status = provisioned). Clears the session on success.
+    // Persists the session's device + capability rows. Requires setupDevice to have
+    // completed (status = provisioned); clears the session on success.
     public synchronized void persistDevice(RequestCallback<MeoDeviceResponse> callback) {
         ILog.i(TAG, "persistDevice", addressLog(session));
         if (session == null) {
@@ -228,8 +207,7 @@ public class MeoProvisionHandler {
         }
     }
 
-    // Release any in-flight session and its BLE link. BLE is single-device, so a
-    // new connect reclaims a previous, unfinished session.
+    // Releases any in-flight session's BLE link; BLE is single-device.
     private void reset() {
         if (session != null) {
             safeDisconnect(session);
@@ -237,9 +215,7 @@ public class MeoProvisionHandler {
         }
     }
 
-    // Upsert the device row (identity + model/firmware). deviceId is the
-    // topic-ready MAC, macAddress the readable one; capability rows are
-    // written separately.
+    // Upserts the device row. deviceId is the topic-ready MAC, macAddress the readable one.
     private MeoDevice saveDevice(MeoDeviceProvision provision) {
         if (isEmpty(provision.getMacAddress())) {
             throw new IllegalStateException("device MAC is required to persist device");
@@ -256,8 +232,7 @@ public class MeoProvisionHandler {
         return device;
     }
 
-    // Replace the device's capability rows with the reported set (delete-all
-    // then insert), so re-provisioning refreshes rather than accumulates.
+    // Replaces capability rows (delete-all then insert) so re-provisioning refreshes, not accumulates.
     private void persistCapabilities(String deviceId, int[] capabilities) {
         dao.deleteByColumn(MeoDeviceCapability.class, "deviceId", deviceId);
         if (capabilities == null || capabilities.length == 0) {
@@ -274,8 +249,7 @@ public class MeoProvisionHandler {
         ILog.i(TAG, "persistCapabilities", "deviceId=" + deviceId, "count=" + capabilities.length);
     }
 
-    // Set the buffered status (and message, when given), then push the session
-    // snapshot to the listener as a provision.status event.
+    // Sets status/message, then emits the session as a provision.status event.
     private void updateStatus(MeoDeviceProvision provision, int status, String message) {
         provision.setStatus(status);
         if (message != null) {
@@ -311,12 +285,8 @@ public class MeoProvisionHandler {
         ILog.i(TAG, "readDeviceMac", "macAddress=" + mac);
     }
 
-    // Read the capability report characteristic and record model, firmware
-    // version, and the capability ids on the provision. Non-fatal: a
-    // firmware/read/parse issue leaves the device provisionable with an empty
-    // capability set, since the device is still usable on Wi-Fi and
-    // re-provisioning refreshes it. Ids are kept verbatim (unknown ids are not
-    // filtered) and later persisted one-per-row by persistCapabilities.
+    // Non-fatal: read/parse failure leaves an empty capability set — the device is
+    // still usable on Wi-Fi and re-provisioning refreshes it. Ids kept verbatim, unfiltered.
     private void readCapabilities(MeoDeviceProvision provision) {
         updateStatus(provision, ProvisionStatus.STATUS_READING_CAPABILITIES, null);
         try {
@@ -395,9 +365,7 @@ public class MeoProvisionHandler {
         }
     }
 
-    // Release the BLE link. Transport cleanup only — it does not touch the
-    // provisioning status, which the buffer must retain (e.g. PROVISIONED) for
-    // persistDevice.
+    // Transport cleanup only — does not touch provisioning status, which persistDevice needs.
     private void safeDisconnect(MeoDeviceProvision provision) {
         try {
             sendBlocking(BlemqttCommand.create(BlemqttOp.DEVICE_DISCONNECT, addressParams(provision)));
@@ -441,8 +409,7 @@ public class MeoProvisionHandler {
 
     // --- blemqtt helpers ------------------------------------------------------
 
-    // Send a command and block for its reply. Throws if the command fails; the
-    // blemqtt client applies its own request timeout.
+    // Blocks for the reply; throws on failure. blemqtt applies its own request timeout.
     private BlemqttReply sendBlocking(BlemqttCommand command) {
         ILog.d(TAG, "send", command.getOp(), command.getRequestId());
         try {
@@ -487,8 +454,7 @@ public class MeoProvisionHandler {
         return new RuntimeException(error.getCode() + ": " + error.getMessage());
     }
 
-    // Returns true when the field is absent or equals the expected value
-    // (case-insensitive) — a missing field is not treated as a mismatch.
+    // True if field is absent or equals expected (case-insensitive); absent = not a mismatch.
     private boolean matches(JsonObject object, String field, String expected) {
         JsonElement value = object.get(field);
         if (value == null || value.isJsonNull() || expected == null) {

@@ -3,11 +3,8 @@ package org.thingai.app.meo.messaging;
 import org.thingai.app.meo.util.ByteUtil;
 
 /**
- * Command frame sent to a device on meo/v1/device/{deviceId}/command.
- * Fixed 8-byte little-endian layout (docs/mqtt_messaging.md):
- * u16 requestId | u16 cap | i32 value
- *
- * Build-only: the gateway never receives a command, so there is no parse().
+ * Command to meo/v1/device/{deviceId}/command: u16 requestId | u16 cap | i32 value.
+ * Build-only, no parse().
  */
 public final class MeoCommandFrame {
     public static final int SIZE = 8;
@@ -16,11 +13,6 @@ public final class MeoCommandFrame {
     private final int cap;
     private final int value;
 
-    /**
-     * @param requestId correlation id, uint16 (0..65535)
-     * @param cap       capability from MeoCmd, uint16 (0..65535)
-     * @param value     scalar for WRITE capabilities; ignored by the device otherwise
-     */
     public MeoCommandFrame(int requestId, int cap, int value) {
         if (requestId < 0 || requestId > 0xFFFF) {
             throw new IllegalArgumentException("requestId out of uint16 range: " + requestId);

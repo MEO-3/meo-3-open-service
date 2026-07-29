@@ -24,16 +24,13 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 // Stepped provisioning endpoints (scan -> connect -> setup -> persist) plus an
-// SSE stream mirroring the handler's progress events, so a UI can watch live
-// status while the blocking step calls run. The step endpoints' request/response
-// contracts are unchanged; the stream is additive visibility.
+// SSE stream mirroring the handler's progress events for live UI status.
 public class ProvisionController implements ProvisionEventListener {
     private static final int DEFAULT_SCAN_TIMEOUT_MS = 8000;
 
     private final MeoProvisionHandler provisionHandler;
 
-    // Events arrive from request threads and the MQTT callback thread;
-    // copy-on-write iteration keeps the fan-out lock-free.
+    // Copy-on-write: events fan out from both request threads and the MQTT callback thread.
     private final List<SseClient> sseClients = new CopyOnWriteArrayList<>();
 
     public ProvisionController(MeoProvisionHandler provisionHandler) {
@@ -68,7 +65,7 @@ public class ProvisionController implements ProvisionEventListener {
         client.onClose(() -> sseClients.remove(client));
         sseClients.add(client);
 
-        // Late/reconnecting clients get the in-flight session state up front.
+        // Send in-flight session state up front for late/reconnecting clients.
         MeoDeviceProvision session = provisionHandler.currentSession();
         if (session != null) {
             send(client, MeoProvisionHandler.EVENT_PROVISION_STATUS, JsonUtil.toJson(session));
@@ -123,8 +120,7 @@ public class ProvisionController implements ProvisionEventListener {
         provisionHandler.scan(timeoutMs, ctx.queryParam("namePrefix"), new RequestCallback<JsonObject[]>() {
             @Override
             public void onResult(JsonObject[] devices, String message) {
-                // Scan results are Gson JsonObjects, which Javalin's Jackson
-                // mapper cannot serialize — render them with Gson instead.
+                // Gson JsonObjects — Javalin's Jackson mapper can't serialize these.
                 ctx.contentType("application/json").result(JsonUtil.toJson(devices));
             }
 

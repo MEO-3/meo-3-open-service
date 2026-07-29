@@ -14,9 +14,7 @@ import org.thingai.app.meo.define.ErrorCode;
 import org.thingai.app.meo.entity.MeoDevice;
 import org.thingai.app.meo.handler.MeoDeviceHandler;
 
-// CRUD over provisioned devices. Devices are created by the provisioning flow
-// (see ProvisionController); this controller only lists, edits user metadata,
-// and removes them.
+// Lists, edits user metadata on, and removes devices created by ProvisionController.
 public class DeviceController {
     private final MeoDeviceHandler deviceHandler;
 

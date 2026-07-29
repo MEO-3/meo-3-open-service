@@ -21,8 +21,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-// Device control over MQTT (docs/mqtt_messaging.md): publish a command frame,
-// block for the device's reply, hand the value back.
+// Device control over MQTT (docs/mqtt_messaging.md): send a command frame, block for the reply.
 public class MeoControlHandler {
     private static final String TAG = "MeoControlHandler";
 
@@ -33,8 +32,7 @@ public class MeoControlHandler {
     private final MqttClient mqttClient;
     private final MeoDeviceHandler deviceHandler;
 
-    // Keyed by deviceId + requestId so a stray reply cannot complete another
-    // device's request.
+    // Keyed by deviceId+requestId so a stray reply can't complete another device's request.
     private final Map<String, CompletableFuture<MeoReplyFrame>> pendingReplies = new ConcurrentHashMap<>();
 
     // Rotating request id from 0 -> 65535
@@ -45,11 +43,8 @@ public class MeoControlHandler {
         this.deviceHandler = deviceHandler;
     }
 
-    // Subscribe to every device's reply topic. The persistent session keeps it
-    // across reconnects, so this runs once.
-    //
-    // Must use the MqttSubscription[] overload: in Paho 1.2.5 the String/String[]
-    // subscribe-with-listener forms recurse into themselves and blow the stack.
+    // Subscribes once; the persistent session survives reconnects. Must use the
+    // MqttSubscription[] overload — Paho 1.2.5's String/String[] listener forms recurse and blow the stack.
     public void start() throws MqttException {
         mqttClient.subscribe(
                 new MqttSubscription[]{new MqttSubscription(MeoTopics.REPLY_WILDCARD, REPLY_QOS)},
@@ -62,8 +57,7 @@ public class MeoControlHandler {
         sendCommand(deviceId, cap, 0, callback);
     }
 
-    // Send a command and wait for the reply. The capability id decides whether
-    // this reads, writes, or runs a generic command.
+    // Sends a command and waits for the reply; the capability id decides read/write/generic.
     public void sendCommand(String deviceId, int cap, int value, RequestCallback<Double> callback) {
         if (isEmpty(deviceId)) {
             callback.onFailure(ErrorCode.CONTROL_FAILED, "device id is required");
@@ -103,8 +97,7 @@ public class MeoControlHandler {
         }
     }
 
-    // Publish the frame and block for its reply. The finally keeps a timed-out
-    // request from leaking its pending entry.
+    // Publishes and blocks for the reply; finally prevents a timed-out request from leaking its entry.
     private MeoReplyFrame sendBlocking(String deviceId, int cap, int value) throws Exception {
         int requestId = nextRequestId();
         String key = pendingKey(deviceId, requestId);

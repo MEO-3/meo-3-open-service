@@ -15,11 +15,9 @@ import org.thingai.app.meo.callback.RequestCallback;
 import org.thingai.app.meo.define.ErrorCode;
 import org.thingai.app.meo.handler.MeoControlHandler;
 
-// Device control endpoint. One route: send a capability command and get the
-// device's value back.
+// Device control endpoint: send a capability command, get the device's value back.
 public class ControlController {
-    // Null when the device MQTT connection failed at startup; the service still
-    // serves the rest of the API, so answer 503 instead of throwing.
+    // Null when device MQTT failed to connect at startup; answer 503 instead of throwing.
     private final MeoControlHandler controlHandler;
 
     public ControlController(MeoControlHandler controlHandler) {
@@ -71,7 +69,6 @@ public class ControlController {
 
         String deviceId = ctx.pathParam("deviceId");
         int cap = request.getCap();
-        // The handler blocks and invokes the callback on this request thread.
         controlHandler.sendCommand(deviceId, cap, request.getValue(), new RequestCallback<Double>() {
             @Override
             public void onResult(Double value, String message) {

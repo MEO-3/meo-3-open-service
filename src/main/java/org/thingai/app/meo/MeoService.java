@@ -21,8 +21,7 @@ import java.io.File;
 public class MeoService extends Service {
     private static final String TAG = "MeoService";
 
-    // Only has to outlive a reconnect (Paho backs off to 128s); the client id is
-    // per-run, so a restart never resumes the old session.
+    // Just needs to outlive a reconnect (Paho backs off to 128s); client id is per-run.
     private static final long MQTT_SESSION_EXPIRY_SECONDS = 300;
 
     private Dao dao;

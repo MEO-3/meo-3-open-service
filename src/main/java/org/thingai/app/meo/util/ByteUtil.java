@@ -2,10 +2,7 @@ package org.thingai.app.meo.util;
 
 public class ByteUtil {
 
-    // Little-endian accessors for the fixed-size binary frames in
-    // docs/mqtt_messaging.md. Mirrors the firmware helpers in
-    // Meo3_Messaging.cpp (writeU16LE/readU16LE/...). The methods in this class
-    // without an LE suffix are big-endian and unrelated.
+    // LE accessors mirror the firmware's Meo3_Messaging.cpp helpers. Non-LE methods below are big-endian and unrelated.
 
     public static void putU16LE(byte[] buf, int offset, int value) {
         buf[offset]     = (byte) value;
@@ -63,8 +60,6 @@ public class ByteUtil {
     public static byte[] hexStringToBytes(String hex) {
         int len = hex.length();
         byte[] data = new byte[len / 2];
-
-        // convert uppercase to lowercase
         hex = hex.toLowerCase();
         for (int i = 0; i < len; i += 2) {
             data[i / 2] = (byte) ((Character.digit(hex.charAt(i), 16) << 4)
@@ -81,8 +76,6 @@ public class ByteUtil {
             return fullBytes;
         }
         byte[] result = new byte[byteLength];
-
-        // get bytes from the end
         System.arraycopy(fullBytes, 8 - byteLength, result, 0, byteLength);
         return result;
     }

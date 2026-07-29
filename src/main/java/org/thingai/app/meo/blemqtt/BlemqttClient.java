@@ -26,9 +26,7 @@ public class BlemqttClient {
     private final BlemqttConfig config;
     private final Gson gson = new Gson();
     private final Map<String, CompletableFuture<BlemqttReply>> pendingReplies = new ConcurrentHashMap<>();
-    // Single event consumer. Provisioning ops are serialized by the handler
-    // (all synchronized), so at most one listener is active at a time; volatile
-    // because it is set/cleared on request threads and read on the MQTT thread.
+    // Single event consumer; volatile since it's set on request threads, read on the MQTT thread.
     private volatile BlemqttCallback<BlemqttEvent> eventCallback;
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
@@ -71,8 +69,7 @@ public class BlemqttClient {
             @Override
             public void connectComplete(boolean reconnect, String serverURI) {
                 ILog.i(TAG, "connectComplete", "reconnect=" + reconnect, serverURI);
-                // cleanStart drops subscriptions on every reconnect, so they
-                // must be re-established here or replies stop arriving.
+                // cleanStart drops subscriptions on every reconnect; re-subscribe or replies stop arriving.
                 subscribeTopics();
             }
 
@@ -88,7 +85,6 @@ public class BlemqttClient {
         client.connect(options);
     }
 
-    // Called from connectComplete (initial connect and every reconnect).
     private void subscribeTopics() {
         try {
             client.subscribe(BlemqttTopics.REPLY_WILDCARD, config.getQos());

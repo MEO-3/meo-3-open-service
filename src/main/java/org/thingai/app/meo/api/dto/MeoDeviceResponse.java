@@ -2,9 +2,7 @@ package org.thingai.app.meo.api.dto;
 
 import org.thingai.app.meo.entity.MeoDevice;
 
-// API read model: a device row joined with its capability ids. Capabilities are
-// stored one-per-row in meo_device_capabilities; this flattens them to an int[]
-// for the client. Not persisted.
+// API read model: a device row with capability ids flattened to an int[]. Not persisted.
 public class MeoDeviceResponse {
     private String deviceId;
     private String name;

@@ -3,9 +3,7 @@ package org.thingai.app.meo.entity;
 import org.thingai.base.dao.annotations.DaoColumn;
 import org.thingai.base.dao.annotations.DaoTable;
 
-// One row per capability a device reports during provisioning. Capability ids
-// are stored verbatim (unknown ids are kept, resolved to labels at the display
-// edge). On re-provision the device's rows are replaced wholesale.
+// One row per reported capability; ids stored verbatim. Re-provisioning replaces all rows.
 @DaoTable(name = "meo_device_capabilities", version = 1)
 public class MeoDeviceCapability {
     @DaoColumn(primaryKey = true, autoIncrement = true)

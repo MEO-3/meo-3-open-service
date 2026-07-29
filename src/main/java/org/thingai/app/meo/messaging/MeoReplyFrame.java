@@ -3,15 +3,8 @@ package org.thingai.app.meo.messaging;
 import org.thingai.app.meo.util.ByteUtil;
 
 /**
- * Reply frame received from a device on meo/v1/device/{deviceId}/reply.
- * Fixed 10-byte little-endian layout (docs/mqtt_messaging.md):
- * u16 requestId | u8 ok | u16 cap | 4-byte value | u8 error
- *
- * Parse-only: the gateway never builds a reply.
- *
- * The value bytes are i32 for WRITE capabilities and f32 for READ ones. The
- * frame keeps them raw and offers asInt()/asFloat(); the caller knows which
- * capability it sent, so it knows which accessor applies.
+ * Reply from meo/v1/device/{deviceId}/reply: u16 requestId | u8 ok | u16 cap | 4B value | u8 error.
+ * Parse-only. value is i32 for WRITE, f32 for READ — caller picks asInt()/asFloat().
  */
 public final class MeoReplyFrame {
     public static final int SIZE = 10;
