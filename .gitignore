@@ -47,5 +47,5 @@
 # Ignore environment configuration files
 .env
 
-# Local runtime database (MEO_DATA_DIR)
-data/*.db
+# Local runtime database (MEO_DATA_DIR), including SQLite's -wal/-shm sidecars
+data/*.db*
