@@ -24,9 +24,18 @@ Out of scope for this version (deliberately deferred, not forgotten):
   normalized to lowercase hex without separators (e.g. `AA:BB:CC:DD:EE:FF` → `aabbccddeeff`).
   The gateway stores it in this form, so it drops straight into a topic with no conversion; the
   device row's `macAddress` keeps the readable colon form for display.
-- `requestId` — a gateway-generated `uint16` correlating one command with its reply. Opaque to the
-  device; it must be echoed back verbatim. It is a wrapping counter, not a unique ID — the gateway's
-  reply timeout keeps the correlation window short enough that reuse is safe.
+- `requestId` — a `uint16` correlating one command with its reply. Opaque to the device; it must be
+  echoed back verbatim. It is not a unique ID, and **each publisher owns its own correlation** —
+  there is more than one, so a `requestId` is only meaningful to whoever minted it:
+  - The **Java service** uses a wrapping counter. Its reply timeout keeps the correlation window
+    short enough that reuse is safe.
+  - **Node-RED** uses a single fixed value (`0xFFFF`), because an independent counter would collide
+    with the service's — both restart at 0. It therefore correlates on the reply's echoed `cap`
+    instead, and attributes a failure reply (which carries `cap=0`) to its oldest outstanding
+    command for that device.
+
+  A publisher must ignore a reply it has no pending request for: with several publishers on one
+  broker, everybody sees everybody's replies on the wildcard.
 
 ## Topics
 
@@ -51,11 +60,14 @@ meo/v1/device/+/event    (not consumed yet — see below)
 There is no retained state topic. The gateway reads device state on demand by sending a READ
 command and returning the reply's value.
 
-**The event topic has no consumer yet.** Devices may publish readings and `MEO_EVENT_*`
-occurrences, and the topic is part of this contract, but nothing on the gateway subscribes to it,
-so those messages are currently discarded. Until that changes, edge-triggered events such as
-`MEO_EVENT_BUTTON` cannot be observed — they have no READ equivalent to poll for. A last-value
-cache is likewise deferred; every read costs a device round trip.
+**Node-RED consumes the event topic.** The `meo-event` node in the `node-red-meo` fork subscribes
+to `meo/v1/device/+/event` on the broker and decodes the frame in JS — one connection per
+`meo-gateway` config node, shared by every event node using it. This is how edge-triggered
+occurrences such as `MEO_EVENT_BUTTON` are observed; they have no READ equivalent to poll for.
+
+Events are QoS 0 and nothing is retained, so a subscriber that is restarting or not yet deployed
+misses whatever arrives meanwhile, and nothing is replayed afterwards. A last-value cache is still
+deferred; every read costs a device round trip.
 
 ## Payloads
 
@@ -176,8 +188,14 @@ Gateway (Java service):
 
 - Publishes commands and awaits replies (`requestId` → future, with timeout), mirroring the
   `BlemqttClient` pattern.
-- Subscribes to the `reply` wildcard and exposes device control over the HTTP API. The `event`
-  wildcard has no consumer yet.
+- Subscribes to the `reply` wildcard and exposes device control over the HTTP API.
+
+Node-RED (`node-red-meo`):
+
+- Publishes command frames and correlates the replies itself (`meo-command`), over one connection
+  per `meo-gateway` config node. It uses the HTTP API only for the device registry.
+- Subscribes to the `event` wildcard on the same connection and decodes the event frame, so flows
+  can react to what a device pushes (`meo-event`).
 
 Firmware (`meo-3-arduino`):
 

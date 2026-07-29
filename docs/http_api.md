@@ -155,8 +155,11 @@ same call reads a sensor, writes an actuator, or runs a generic command dependin
 send (see `define/MeoCmd.java`).
 
 The gateway publishes an MQTT command frame to the device and blocks for its reply
-(see `docs/mqtt_messaging.md`) — clients never touch MQTT, and the gateway owns request
-correlation and the timeout.
+(see `docs/mqtt_messaging.md`), owning request correlation and the timeout on the caller's behalf.
+
+This is one way to command a device, not the only one: a client that already speaks MQTT can
+publish the command frame itself, which is what the Node-RED `meo-command` node does. Use this
+endpoint when you would rather not implement frame encoding and reply correlation.
 
 ### `POST /api/v1/devices/{deviceId}/command`
 
