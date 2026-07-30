@@ -3,6 +3,10 @@ name = "meo-3-neo-ble-service"
 version = "0.1.0"
 edition = "2024"
 
+[profile.release]
+# Release binaries ship in the gateway package; symbols cost ~5 MB there.
+strip = "symbols"
+
 [dependencies]
 tokio = { version = "1", features = ["full"] }
 bluer = { version = "0.17.4", features = ["bluetoothd"] }

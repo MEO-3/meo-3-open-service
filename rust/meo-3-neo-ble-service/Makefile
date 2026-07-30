@@ -3,11 +3,12 @@ TARGET ?= aarch64-unknown-linux-gnu
 CROSS ?= cross
 CARGO ?= cargo
 
-.PHONY: help build build-arm64 build-aarch64 check check-arm64 test clean run print-artifact
+.PHONY: help build build-amd64 build-arm64 build-aarch64 check check-arm64 test clean run print-artifact
 
 help:
 	@echo "Targets:"
 	@echo "  make build          Build for the host with cargo"
+	@echo "  make build-amd64    Build release binary for x86_64 with cross (for shipping)"
 	@echo "  make build-arm64    Build release binary for ARM64/aarch64 with cross"
 	@echo "  make build-aarch64  Alias for build-arm64"
 	@echo "  make check          Check for the host with cargo"
@@ -21,6 +22,13 @@ help:
 
 build:
 	$(CARGO) build
+
+# For packaging, not for dev: a host `cargo build` on a modern distro links a
+# glibc newer than Debian/Raspberry Pi OS stable provides, so the binary will
+# not start there. `cross` builds against an older glibc floor.
+build-amd64:
+	$(CROSS) build --target x86_64-unknown-linux-gnu --release
+	@$(MAKE) print-artifact TARGET=x86_64-unknown-linux-gnu
 
 build-arm64:
 	$(CROSS) build --target $(TARGET) --release

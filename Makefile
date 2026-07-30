@@ -18,6 +18,7 @@ help:
 	@echo "  make clean        Remove Gradle build output"
 	@echo ""
 	@echo "  make ble-x86      Build the Rust BLE binary for x86_64 (release, host)"
+	@echo "  make ble-x86-dist Build the x86_64 BLE binary for shipping (cross, old glibc)"
 	@echo "  make ble-arm      Build the Rust BLE binary for ARM64 (release, cross)"
 	@echo ""
 	@echo "  make package-x86  Package the linux-x86_64 distribution (Java + BLE)"
@@ -45,6 +46,11 @@ clean:
 
 ble-x86:
 	cd $(BLE_DIR) && $(CARGO) build --release
+
+# Use this, not ble-x86, for anything shipped: a host build links a glibc newer
+# than Debian/Raspberry Pi OS stable has.
+ble-x86-dist:
+	$(MAKE) -C $(BLE_DIR) build-amd64
 
 ble-arm:
 	$(MAKE) -C $(BLE_DIR) build-arm64
